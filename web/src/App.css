@@ -1,0 +1,56 @@
+.App {
+  display: flex;
+  flex-direction: column;
+}
+
+.toolBarContainer {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  border-color: rgb(255, 251, 0);
+}
+
+.playContainer {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  display: flex;
+  flex-wrap: wrap;
+  height: 10vh;
+  background-color: light;
+}
+
+.onlineChatContainer {
+  display: flex;
+  height: 40vh;
+}
+
+.handContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardContainer {
+  display: flex;
+  flex-wrap: wrap;
+  border: 1px rgb(255, 255, 255) solid;
+  justify-content: center;
+}
+
+.btn.btn-sm.m-2.btn-danger[disabled],
+.btn.btn-sm.m-2.btn-dark[disabled] {
+  color: #bdbdbd;
+}
+
+.navrow2 {
+  display: flex;
+  flex-wrap: wrap;
+}

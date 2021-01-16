@@ -1,0 +1,9 @@
+.bidContainer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btncol {
+  border: 1px rgb(255, 255, 255) solid;
+}

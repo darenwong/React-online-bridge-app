@@ -1,0 +1,22 @@
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  border: 1px rgb(55, 0, 255) solid;
+  flex-grow: 1;
+}
+
+.chatHeader {
+  justify-content: flex-start;
+}
+
+.messagesWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.chat {
+  display: flex;
+  justify-content: flex-end;
+}

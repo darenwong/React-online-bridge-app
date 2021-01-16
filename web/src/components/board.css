@@ -1,0 +1,59 @@
+.boardContainer {
+  display: flex;
+  flex-direction: column;
+  border: 1px rgb(255, 255, 255) solid;
+  flex-wrap: wrap;
+}
+
+.row1 {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 2rem;
+}
+
+.row2 {
+  display: flex;
+  flex-direction: column;
+  border: 1px rgb(255, 255, 255) solid;
+  justify-content: center;
+}
+
+.dropdown-menu {
+  height: 30vh;
+  overflow-y: scroll;
+}
+
+.col1,
+.col3,
+.col4,
+.col5 {
+  justify-content: center;
+  align-self: center;
+  flex: 1;
+}
+
+.col2 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  border: 1px rgb(255, 255, 255) solid;
+}
+
+.col2row1 {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  border: 1px rgb(255, 255, 255) solid;
+  flex-wrap: wrap;
+}
+.col2row2 {
+  align-self: center;
+  border: 1px rgb(255, 255, 255) solid;
+}
+.col2row3 {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  border: 1px rgb(255, 255, 255) solid;
+  flex-wrap: wrap;
+}
