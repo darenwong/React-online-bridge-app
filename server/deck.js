@@ -1,3 +1,4 @@
+const Card = require('./card');
 
 class Deck {
     constructor(){
@@ -6,7 +7,7 @@ class Deck {
 
         for (let suite of ["c", "d", "h", "s"]){
             for (let i = 2; i < 15; i++){
-                deck.push({"id":cardID, "suite":suite, "val":i});
+                deck.push(new Card(cardID, suite, i));
                 cardID ++;
             }
         }
