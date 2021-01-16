@@ -14,7 +14,6 @@ app.get("/", (req, res) => {
 
 
 var rooms = {'main': new Room() };
-var deck = new Deck();
 let users = [];
 let usernames = [];
 
@@ -28,6 +27,7 @@ io.on('connection', socket => {
   console.log('a user is connected');
   rooms[userRoom].clients ++;
   updateState(io, rooms, userRoom, usernames);
+
 
   socket.on('setUsernameRoom', ({name, room}) => {
     usernames.push(name);
@@ -43,119 +43,76 @@ io.on('connection', socket => {
     updateState(io, rooms, userRoom, usernames);
   })
 
+
   socket.on('requestRestart', () => {
     rooms[userRoom].restart();
     updateState(io, rooms, userRoom, usernames);
   })
   
+
   socket.on('setRole', ({role, user:name}) => {
     userRole = role;
-
-    let userPlayAreaLocation = Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID);
-    // If user was one of the players, remove him from player list 
-    if (userPlayAreaLocation !== undefined) {
-        rooms[userRoom].players[userPlayAreaLocation] = null;
-    };
-    
-    console.log("Set "+name+" "+role);
-    switch(role) {
-        case "Spectator":
-            // If user was not a spectator, add him to spectator list
-            if (rooms[userRoom].spectators.indexOf(name) < 0){
-                rooms[userRoom].spectators.push(name);
-            }
-            break;
-        default:
-            rooms[userRoom].players[role] = name;
-            // If user was a spectator, remove him from spectator list
-            let index = rooms[userRoom].spectators.indexOf(name)
-            if ( index > -1){
-                rooms[userRoom].spectators.splice(index, 1);
-            }
-    }
-    
+    console.log('before', rooms[userRoom].players)
+    rooms[userRoom].updatePlayerList(userID);
+    rooms[userRoom].updateSpectatorList(name, role);
+    console.log('after', rooms[userRoom].players)
     socket.emit('roleSetSuccessful', {role: role});
     updateState(io, rooms, userRoom, usernames);
   })
 
+
   socket.on('setBid', (selectedBid) => {
     rooms[userRoom].turns ++;
     rooms[userRoom].ipass ++;
-    if (selectedBid === "pass"){
-        rooms[userRoom].bidlog.push({bid:"pass", userID:userID, userRole:userRole});
-        //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: userRole + " passed"}); 
-        selectedBid = rooms[userRoom].bid;
-        rooms[userRoom].pass ++;
-    }
-    else{
-        rooms[userRoom].bid = selectedBid;
-        rooms[userRoom].bidlog.push({bid:rooms[userRoom].bid, userID:userID, userRole:userRole});
-        //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: userRole + " bids " + (Math.floor((Number(selectedBid)-1)/5)+1) + [" Club", " Diamond", " Heart", " Spade", " No Trump"][(Number(selectedBid)-1)%5]}); 
-        rooms[userRoom].pass = 0;
-        rooms[userRoom].bidWinner = {userID:userID, userRole:userRole, winningBid:null, trump: null, partner: {"suite":null,"val":null,"role":null}};
-    }
+    rooms[userRoom].setBid(selectedBid, userID, userRole);
+    
     io.to(userRoom).emit('receivedBid', {selectedBid: selectedBid, turns:rooms[userRoom].turns, bidlog:rooms[userRoom].bidlog});
 
-    if (rooms[userRoom].pass === 4){
-        rooms[userRoom].status = "allPass";
-        updateState(io, rooms, userRoom, usernames);
-    }
+    rooms[userRoom].handleConsecutivePasses(selectedBid);
 
-    else if (rooms[userRoom].pass >= 3){
-        if (rooms[userRoom].ipass !== 3) {
-            rooms[userRoom].bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
-            rooms[userRoom].bidWinner.trump = (Number(selectedBid)-1)%5;
-            if (rooms[userRoom].bidWinner.trump === 4){
-                rooms[userRoom].turns = ["North", "East", "South", "West"].indexOf(rooms[userRoom].bidWinner.userRole)
-            }
-            else {
-                rooms[userRoom].turns = (["North", "East", "South", "West"].indexOf(rooms[userRoom].bidWinner.userRole) + 3)%4;
-            }
-            rooms[userRoom].status = "selectPartner";
-            console.log(rooms[userRoom].turns + " start playing", userID, userRole, rooms[userRoom].bidWinner.winningBid, selectedBid, (selectedBid+4)/5);
-            io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
-            io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
-        }
-        updateState(io, rooms, userRoom, usernames);
+    if (rooms[userRoom].status === "selectPartner"){
+        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
+        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
     }
+    
+    updateState(io, rooms, userRoom, usernames);
   })
+
 
   socket.on('requestStart', () =>{
     rooms[userRoom].status = "bid";
-    //console.log("before shuffle: ", deck);
+    
+    let deck = new Deck();
     deck.shuffle();
-    //console.log("after shuffle: ", deck);
     rooms[userRoom].playerHands = deck.deal(rooms[userRoom].playerHands);
-    //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Bidding phase started"}); 
-    //console.log("cards dealt: ", rooms[userRoom].playerHands);
     console.log("players: ", rooms[userRoom].players)
     updateState(io, rooms, userRoom, usernames);
   })
+
 
   socket.on('sendMsg', (data) => {
     io.to(userRoom).emit('receivedMsg', data);
     console.log("sent message: ", data.message)
   })
 
+
   socket.on('disconnect', () => {
+    // Remove user from global username list
     if (usernames.indexOf(userID) > -1) usernames.splice(usernames.indexOf(userID),1);
 
+    // Remove user from global socket ID list
     let indexID = users.indexOf(socket.id);
     if (indexID > -1) {
         users.splice(indexID, 1);
     }
-
+    
+    // Update number of clients
     rooms[userRoom].clients --;
     if (userRoom !== "main") rooms["main"].clients --;
+    
+    rooms[userRoom].updatePlayerList(userID);
+    rooms[userRoom].updateSpectatorList(userID, null);
 
-    if (Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID) !== undefined) {
-        rooms[userRoom].players[Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID)] = null;
-    };
-    let index = rooms[userRoom].spectators.indexOf(userID);
-    if (index > -1) {
-        rooms[userRoom].spectators.splice(index, 1);
-    }
-    //if (rooms[userRoom].clients === 0 && userRoom !== 'main') delete rooms[userRoom];
     updateState(io, rooms, userRoom, usernames);
     console.log('user is disconnected');
   })
