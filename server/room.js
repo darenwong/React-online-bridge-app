@@ -134,10 +134,9 @@ class Room {
     
         else if (this.pass >= 3){
             if (this.ipass !== 3) {
-                console.log('before trump is', this.bidWinner, selectedBid);
                 this.bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
                 this.bidWinner.trump = (Number(selectedBid)-1)%5;
-                console.log('after trump is', this.bidWinner, Number(selectedBid));
+
                 if (this.bidWinner.trump === 4){
                     this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
                 }
@@ -197,6 +196,50 @@ class Room {
             }
         })
         return winner;
+    }
+
+    checkGameOver() {
+        // Game is over if all 13 rounds have been played
+        if (this.partnerRole !== null && this.allThirteenRoundsPlayed === true) {
+            let score = 0;
+            
+            // Determine who are the winners and their score
+            let finalWinner = this.getFinalWinner();
+            switch(finalWinner) {
+                case "BidWinner and Partner":
+                    this.winner = [this.partnerRole, this.bidWinner.userRole];
+                    score = this.getBidWinnerTeamScore();                    
+                    break;
+
+                case "Defenders":
+                    this.winner = ["North", "East", "South", "West"].filter(role => role !== this.partnerRole && role !== this.bidWinner.userRole);
+                    score = 13 - this.getBidWinnerTeamScore();
+                    break;
+            };
+
+            if (this.status != 'gameOver') io.to(userRoom).emit('receivedMsg', {username: "Admin", message: this.winner[0] + " and " + this.winner[1] + " have won with " + score + " tricks! Click Restart to play again"});
+            this.status = "gameOver";
+        }
+    }
+
+    allThirteenRoundsPlayed() {
+        return Object.values(this.scoreboard).reduce((a, b) => a + b) === 13;
+    }
+
+    getFinalWinner() {
+        let finalWinner = null;
+
+        // Bidwinner + Partner wins if they won more than 6 + the number of bids. Else, the defenders won 
+        if (this.getBidWinnerTeamScore >= this.bidWinner.winningBid + 6) {
+            finalWinner = "BidWinner and Partner"
+        } else {
+            finalWinner = "Defenders"
+        }
+        return finalWinner;
+    }
+
+    getBidWinnerTeamScore() {
+        return this.scoreboard[this.partnerRole] + this.scoreboard[this.bidWinner.userRole];
     }
 }
 

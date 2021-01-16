@@ -172,18 +172,16 @@ io.on('connection', socket => {
 
 
   socket.on('updateMyHand', () => {
-    if (rooms[userRoom].playerHands[userRole] === undefined){
-        socket.emit('updateHand', []);
+    // If user is not playing, set hand to empty
+    (rooms[userRoom].playerHands[userRole] === undefined) ? socket.emit('updateHand', []) :socket.emit('updateHand', rooms[userRoom].playerHands[userRole])
     }
-    else{
-        socket.emit('updateHand', rooms[userRoom].playerHands[userRole]);
-    }
-  })
+  )
 
   socket.on('setPartner', ({suite, val, role:partnerID}) => {
+    // Search through all four players hand to find who holds the partner card
     for (let player of ["North","East","South","West"]){
+        // For each player, search through all 13 cards in hand
         for (i = 0; i < 13; i++){
-            console.log("check partner is ", rooms[userRoom].playerHands[player][i].id, partnerID);
             if (Number(rooms[userRoom].playerHands[player][i].id) === Number(partnerID)){
                 rooms[userRoom].bidWinner.partner = {suite: suite, val:val};
                 rooms[userRoom].partnerRole = player;
@@ -207,24 +205,12 @@ http.listen(process.env.PORT || 4000, function() {
 function updateState(io, rooms, userRoom, usernames) {
     console.log("active rooms: ", Object.keys(rooms));
     io.to(userRoom).emit('allUpdateHand');
-    if (rooms[userRoom].partnerRole !== null && Object.values(rooms[userRoom].scoreboard).reduce((a, b) => a + b) === 13) {
-        let score = 0;
-        if (rooms[userRoom].scoreboard[rooms[userRoom].partnerRole] + rooms[userRoom].scoreboard[rooms[userRoom].bidWinner.userRole] >= rooms[userRoom].bidWinner.winningBid + 6){
-            rooms[userRoom].winner = [rooms[userRoom].partnerRole, rooms[userRoom].bidWinner.userRole];
-            score = rooms[userRoom].scoreboard[rooms[userRoom].partnerRole] + rooms[userRoom].scoreboard[rooms[userRoom].bidWinner.userRole];
-        }
-        else { 
-            score = 13 - rooms[userRoom].scoreboard[rooms[userRoom].partnerRole] - rooms[userRoom].scoreboard[rooms[userRoom].bidWinner.userRole];
-            for (let role of ["North", "East", "South", "West"]){
-                if (!(role === rooms[userRoom].partnerRole || role === rooms[userRoom].bidWinner.userRole)) {
-                    rooms[userRoom].winner.push(role);
-                }
-            }
-        }
-        if (rooms[userRoom].status != 'gameOver') io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + score + " tricks! Click Restart to play again"});
-        rooms[userRoom].status = "gameOver";
-    }
+
+    rooms[userRoom].checkGameOver();
+
+    // Delete empty room except for main room
     if (rooms[userRoom].clients === 0 && userRoom !== 'main') delete rooms[userRoom];
+    
     io.to(userRoom).emit('updateState', (rooms[userRoom]));
     io.emit('updateGlobalID', usernames);
 }
