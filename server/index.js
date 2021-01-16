@@ -1,4 +1,4 @@
-room = require('./room');
+const Room = require('./room');
 const Deck = require('./deck');
 
 const app = require('express')();
@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
   });
 
 
-var rooms = {'main': room };
+var rooms = {'main': new Room() };
 var deck = new Deck();
 let users = [];
 let usernames = [];
@@ -34,60 +34,47 @@ io.on('connection', socket => {
     console.log(name + ' is connected to room: ' + room, usernames);
     userID = name;
     userRoom = room;
-    if (Object.keys(rooms).indexOf(room) === -1){
-        rooms[room] = {disable:false, turns:0, status:"setup", bid:0, bidlog:[], pass: 0, ipass:0, bidWinner:{userID:null, userRole:null, winningBid:null, trump: null, partner: {"suite":null,"val":null}}, partnerRole: null, playerHands:{"North":[],"East":[],"South":[],"West":[]}, players:{"North":null,"East":null,"South":null,"West":null}, spectators: [], clients:0, turnStatus: {start: null, board:[], trumpBroken:false}, scoreboard: {"North":0,"East":0,"South":0,"West":0}, winner: []};
+    if (Object.keys(rooms).indexOf(userRoom) === -1){
+        rooms[userRoom] = new Room();
     }
-    socket.join(room);
+    socket.join(userRoom);
     rooms[userRoom].spectators.push(userID);
     rooms[userRoom].clients ++;
     updateState(io, rooms, userRoom, usernames);
   })
 
   socket.on('requestRestart', () => {
-    rooms[userRoom].turns = 0;
-    rooms[userRoom].status = "setup";
-    rooms[userRoom].bid = 0;
-    rooms[userRoom].bidlog = [];
-    rooms[userRoom].pass = 0;
-    rooms[userRoom].ipass = 0;
-    rooms[userRoom].bidWinner = {userID:null, userRole:null, winningBid:null, trump: null, partner: {"suite":null,"val":null,"role":null}};
-    rooms[userRoom].playerHands ={"North":[],"East":[],"South":[],"West":[]};
-    rooms[userRoom].turnStatus = {start: null, board:[], trumpBroken:false};
-    rooms[userRoom].scoreboard = {"North":0,"East":0,"South":0,"West":0};
-    rooms[userRoom].winner = [];
+    rooms[userRoom].restart();
     updateState(io, rooms, userRoom, usernames);
   })
   
   socket.on('setRole', ({role, user:name}) => {
+    userRole = role;
 
-    if (role === "Spectator"){
-        userRole = "Spectator"
-        if (Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID) !== undefined) {
-            rooms[userRoom].players[Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID)] = null;
-        };
-        console.log("Set "+name+" Spectator");
-        if (rooms[userRoom].spectators.indexOf(name) < 0){
-            rooms[userRoom].spectators.push(name);
-        }
-        socket.emit('roleSetSuccessful', {role: role});
+    let userPlayAreaLocation = Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID);
+    // If user was one of the players, remove him from player list 
+    if (userPlayAreaLocation !== undefined) {
+        rooms[userRoom].players[userPlayAreaLocation] = null;
+    };
+    
+    console.log("Set "+name+" "+role);
+    switch(role) {
+        case "Spectator":
+            // If user was not a spectator, add him to spectator list
+            if (rooms[userRoom].spectators.indexOf(name) < 0){
+                rooms[userRoom].spectators.push(name);
+            }
+            break;
+        default:
+            rooms[userRoom].players[role] = name;
+            // If user was a spectator, remove him from spectator list
+            let index = rooms[userRoom].spectators.indexOf(name)
+            if ( index > -1){
+                rooms[userRoom].spectators.splice(index, 1);
+            }
     }
-    else if (rooms[userRoom].players[role] !== null) {
-        console.log("Set role failed")
-    }
-    else {
-        userRole = role
-        if (Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID) !== undefined) {
-            rooms[userRoom].players[Object.keys(rooms[userRoom].players).find(key => rooms[userRoom].players[key] === userID)] = null;
-        };
-        rooms[userRoom].players[role] = name;
-        console.log("Set "+name+" "+role);
-        let index = rooms[userRoom].spectators.indexOf(name);
-        if (index > -1) {
-            rooms[userRoom].spectators.splice(index, 1);
-        }
-
-        socket.emit('roleSetSuccessful', {role: role});
-    }
+    
+    socket.emit('roleSetSuccessful', {role: role});
     updateState(io, rooms, userRoom, usernames);
   })
 
@@ -266,16 +253,6 @@ io.on('connection', socket => {
 http.listen(process.env.PORT || 4000, function() {
   console.log('listening on port 4000');
 })
-/*
-function updateState(io, rooms, userRoom, usernames) {
-    if (rooms[userRoom].playerHands[userRole] === undefined){
-        socket.emit('updateHand', []);
-    }
-    else{
-        socket.emit('updateHand', rooms[userRoom].playerHands[userRole]);
-    }
-    io.to(userRoom).emit('updateState', rooms[userRoom]);
-}*/
 
 
 
