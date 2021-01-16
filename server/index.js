@@ -1,5 +1,8 @@
-const app = require('express')()
-const http = require('http').createServer(app)
+room = require('./room');
+const Deck = require('./deck');
+
+const app = require('express')();
+const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors:true,
     origins: '*:*'
@@ -10,18 +13,12 @@ app.get("/", (req, res) => {
   });
 
 
-var rooms = {'main': {disable:false, turns:0, status:"setup", bid:0, bidlog:[], pass: 0, ipass:0, bidWinner:{userID:null, userRole:null, winningBid:null, trump: null, partner: {"val":null,"role":null}}, partnerRole:null, playerHands:{"North":[],"East":[],"South":[],"West":[]}, players:{"North":null,"East":null,"South":null,"West":null}, spectators: [], clients:0, turnStatus: {start: null, board:[], trumpBroken:false}, scoreboard: {"North":0,"East":0,"South":0,"West":0}, winner: []}};
-var deck = [];
-var cardID = 0;
-for (let suite of ["c", "d", "h", "s"]){
-    for (i = 2; i < 15; i++){
-        deck.push({"id":cardID, "suite":suite, "val":i});
-        cardID ++;
-    }
-}
-
+var rooms = {'main': room };
+var deck = new Deck();
 let users = [];
 let usernames = [];
+
+
 io.on('connection', socket => {
   let userID;
   let userRoom = 'main';
@@ -139,9 +136,9 @@ io.on('connection', socket => {
   socket.on('requestStart', () =>{
     rooms[userRoom].status = "bid";
     //console.log("before shuffle: ", deck);
-    deck = shuffle(deck);
+    deck.shuffle();
     //console.log("after shuffle: ", deck);
-    rooms[userRoom].playerHands = deal(deck, rooms[userRoom].playerHands);
+    rooms[userRoom].playerHands = deck.deal(rooms[userRoom].playerHands);
     //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Bidding phase started"}); 
     //console.log("cards dealt: ", rooms[userRoom].playerHands);
     console.log("players: ", rooms[userRoom].players)
@@ -309,39 +306,3 @@ function updateState(io, rooms, userRoom, usernames) {
     
 
 
-function shuffle(array) {
-    let currentIndex = array.length, temporaryValue, randomIndex;
-  
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-  
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
-  
-      // And swap it with the current element.
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
-    }
-  
-    return array;
-  }
-
-function deal(deck, playerHands) {
-    playerHands = {"North":[],"East":[],"South":[],"West":[]}
-
-    for (let [index, player] of ["North", "East", "South", "West"].entries()){
-        for (i = 0; i < deck.length/4; i++){
-            playerHands[player].push(deck[i+index*deck.length/4]);
-        }
-        playerHands[player].sort(
-            function(a, b) {          
-               if (a.suite === b.suite) {
-                  return a.val - b.val;
-               }
-               return a.suite > b.suite ? 1 : -1;
-            });
-    }
-    return playerHands;
-  }
