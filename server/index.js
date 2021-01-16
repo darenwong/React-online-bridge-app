@@ -64,7 +64,7 @@ io.on('connection', socket => {
   socket.on('setBid', (selectedBid) => {
     rooms[userRoom].turns ++;
     rooms[userRoom].ipass ++;
-    rooms[userRoom].setBid(selectedBid, userID, userRole);
+    selectedBid = rooms[userRoom].setBid(selectedBid, userID, userRole);
     
     io.to(userRoom).emit('receivedBid', {selectedBid: selectedBid, turns:rooms[userRoom].turns, bidlog:rooms[userRoom].bidlog});
 
@@ -117,68 +117,59 @@ io.on('connection', socket => {
     console.log('user is disconnected');
   })
 
+
   socket.on('requestPlayCard', ({id, suite, val}) =>{
     console.log(userRole + " played " + suite+ " "+ val);
 
-    let temp = [];
-    for (let i=0; i<rooms[userRoom].turnStatus.board.length; i++){
-        temp.push(rooms[userRoom].turnStatus.board[i].user);
-    }
-    if (temp.indexOf(userRole)>-1){
+    if (rooms[userRoom].checkPlayerPlayedBefore(userRole) === true){
         return ;
     }
 
-    if (suite === ["c","d","h","s"][rooms[userRoom].bidWinner.trump] && rooms[userRoom].turnStatus.trumpBroken === false){
-        rooms[userRoom].turnStatus.trumpBroken = true;
+    if (rooms[userRoom].checkTrumpBrokenStatus(suite) === true){
         io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
     }
+
+    // If board is empty, set first card as starting suit
     if (rooms[userRoom].turnStatus.board.length === 0){
         rooms[userRoom].turnStatus.start = suite;
     }
+
+    // Add card to board
     rooms[userRoom].turnStatus.board.push({user: userRole, id:id,suite:suite,val:val});
-    console.log(rooms[userRoom].playerHands, userRole);
+
     console.log({id:id,suite:suite,val:val});
 
-    rooms[userRoom].playerHands[userRole].forEach(function (card, index) {
-        if (id === card.id){
-            rooms[userRoom].playerHands[userRole].splice(index, 1);
-        }
-    });
+    rooms[userRoom].updatePlayerHand(userRole, id);
 
-    
+    // If there are 4 or more cards on the board, we conclude and end the round
     if (rooms[userRoom].turnStatus.board.length >= 4){
+        // Disable all cards to prevent players from further playing any cards until next round starts
         rooms[userRoom].disable = true;
         updateState(io, rooms, userRoom, usernames);
-        var winner = rooms[userRoom].turnStatus.board[0]
-        rooms[userRoom].turnStatus.board.forEach(function (card, index) {
-            if (index === 0){
-                winner = card;
-            }
-            else if (card.suite === winner.suite && card.val > winner.val){
-                winner = card;
-            }
-            else if (card.suite === ["c","d","h","s"][rooms[userRoom].bidWinner.trump] && rooms[userRoom].turnStatus.trumpBroken){
-                if (winner.suite !== ["c","d","h","s"][rooms[userRoom].bidWinner.trump]){
-                    winner = card;
-                }
-                else if (card.val > winner.val){
-                    winner = card;
-                }
-            }
-        })
-        rooms[userRoom].turns = ["North", "East", "South", "West"].indexOf(winner.user)
+        
+        // All the following updates will only take effect after timeout
+        // Get winner of the round
+        let winner = rooms[userRoom].getWinner();
+        console.log('winner', winner);
+        // Set winner position to start the next round
+        rooms[userRoom].turns = ["North", "East", "South", "West"].indexOf(winner.user);
+        // Add winner score by 1
         rooms[userRoom].scoreboard[winner.user] ++;
+        // Reset board state to empty
         rooms[userRoom].turnStatus.board = [];
+        // Reset starting card to null
         rooms[userRoom].turnStatus.start = null;
+        // Set disable back to false
         rooms[userRoom].disable = false;
         setTimeout(() => {  updateState(io, rooms, userRoom, usernames); }, 2000);
     }
     else {
+        // Round hasnt ended, increment turn by 1 and keep playing
         rooms[userRoom].turns = (rooms[userRoom].turns + 1)%4;
         updateState(io, rooms, userRoom, usernames);
     }
-    
   })
+
 
   socket.on('updateMyHand', () => {
     if (rooms[userRoom].playerHands[userRole] === undefined){

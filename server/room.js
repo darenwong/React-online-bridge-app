@@ -124,6 +124,7 @@ class Room {
                 this.bidWinner.userID = userID;
                 this.bidWinner.userRole = userRole;
         }
+        return selectedBid
     }
 
     handleConsecutivePasses(selectedBid){
@@ -133,8 +134,10 @@ class Room {
     
         else if (this.pass >= 3){
             if (this.ipass !== 3) {
+                console.log('before trump is', this.bidWinner, selectedBid);
                 this.bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
                 this.bidWinner.trump = (Number(selectedBid)-1)%5;
+                console.log('after trump is', this.bidWinner, Number(selectedBid));
                 if (this.bidWinner.trump === 4){
                     this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
                 }
@@ -146,6 +149,55 @@ class Room {
         }
     }
 
+    checkPlayerPlayedBefore(userRole) {
+        for (let i=0; i<this.turnStatus.board.length; i++){
+            if (this.turnStatus.board[i].user === userRole){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    checkTrumpBrokenStatus(suite) {
+        if (suite === ["c","d","h","s"][this.bidWinner.trump] && this.turnStatus.trumpBroken === false){
+            this.turnStatus.trumpBroken = true;
+        }
+        return this.turnStatus.trumpBroken;
+    }
+
+    updatePlayerHand(userRole, id) {
+        this.playerHands[userRole].forEach((card, index) => {
+            if (id === card.id){
+                this.playerHands[userRole].splice(index, 1);
+            }
+        });
+    }
+
+    getWinner() {
+        let winner;
+        this.turnStatus.board.forEach((card, index) => {
+            if (index === 0){
+                // This is the starting card of the round, by default it is the winning card
+                winner = card;
+            }
+            else if (card.suite === winner.suite && card.val > winner.val){
+                // If the suit matches the current winning suit, but the card value is higher, this becomes the new winning card
+                winner = card;
+            }
+            else if (card.suite === ["c","d","h","s"][this.bidWinner.trump] && this.turnStatus.trumpBroken){
+                // If this card is from trump suit and trump is broken, consider the following
+                if (winner.suite !== ["c","d","h","s"][this.bidWinner.trump]){
+                    // If the current winning suit is not a trump suit, this becomes the new winning card
+                    winner = card;
+                }
+                else if (card.val > winner.val){
+                    // If the current winning suit is a trump suit, but it's card value is higher, this becomes the new winning card
+                    winner = card;
+                }
+            }
+        })
+        return winner;
+    }
 }
 
 module.exports = Room;
