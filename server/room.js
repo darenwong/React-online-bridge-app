@@ -1,5 +1,3 @@
-
-
 let room = {        
             disable:false, 
             turns:0, 
@@ -46,6 +44,5 @@ let room = {
             }, 
             winner: []
         }
-
-
+     
 module.exports = room;
