@@ -1,4 +1,32 @@
-import React, { useState, useEffect} from 'react'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: App.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: App.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useState, useEffect} from 'react'
 import { Navbar,Nav} from 'react-bootstrap'
 import io from 'socket.io-client'
 import './App.css';
@@ -10,6 +38,9 @@ import SelectPartner from './components/selectPartner.jsx'
 const socket = io('http://localhost:4000');
 //const socket = io('https://floating-bridge-online.herokuapp.com/');
 
+/**
+ * Create App Object
+ */
 function App() {
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
@@ -76,6 +107,11 @@ function App() {
     })
   }, []);
 
+
+  /**
+   * Send request to server to broadcast chat message
+   * @param {*} event 
+   */
   function handleSendMsg(event) {
     socket.emit('sendMsg', {message: msg, username: name});
     setMsg('');
@@ -111,58 +147,42 @@ function App() {
   }
 
   function checkValidCard(id,suite,val) {
-    // if no trump game
     if (bidWinner.trump === 4){
-      // if board is empty, any card can be played
       if (turnStatus.board.length === 0) return true;
-      // if board is NOT empty, subject to what the first card in board is
       else{
-        // if card suit is the same as first card suit, card can be played
         if (turnStatus.start === suite) return true;
-        // if different suit, check if hands contains card that are same suit as the first card on board. 
-        // if present, card is invalid, as player still have the suit.
-        // if absent, card is valid 
         else {
-          for (let i = 0; i < hand.length; i++) {
+          for (let i = 0; i &lt; hand.length; i++) {
             if (hand[i].suite === turnStatus.start) return false;
           }
           return true
         }
       }
     }
-    // if there is a trump suit and board is empty
+
     if (turnStatus.board.length === 0){
-      // if card to be played comes from trump suit
       if (["c","d","h","s"].indexOf(suite) === bidWinner.trump){
-        // if trump was broken, then can play trump
         if (turnStatus.trumpBroken === true) return true
-        // if trump was not broken, check if hand contains other suit
         else {
-          for (let i = 0; i < hand.length; i++) {
-            // if hand contain other suit, then player must play other suit
+          for (let i = 0; i &lt; hand.length; i++) {
+            //console.log(hand[i].suite, bidWinner.trump)
             if (["c","d","h","s"].indexOf(hand[i].suite) !== bidWinner.trump) return false;
           }
-          // if hand only have trump suit left, player can play trump suit
           return true;
         };
       }
-      // if card is not a trump suit, card is valid to play
       else return true;
     }
-    // if there is a trump suit and board is not empty
     else {
-      // if card matches starting suit, card is valid to play
       if (turnStatus.start === suite) return true;
-      // if card does not match starting suit, check whether hand has cards that match starting suit
       else {
-        for (let i = 0; i < hand.length; i++) {
-          // if hand has other cards that match starting suit, player must follow starting suit
+        for (let i = 0; i &lt; hand.length; i++) {
           if (hand[i].suite === turnStatus.start) return false;
         }
-        // if hand has no card that matches starting suit, player can play any card
         return true;
       }
     }
+    //return false;
   }
 
 
@@ -188,7 +208,7 @@ function App() {
   }
 
   function getCardDisplay(suite, val) {
-    let symbol = {"c": <div>&clubs;{getCardVal(val-2)}</div>, "d": <div>&diams;{getCardVal(val-2)}</div>, "h": <div>&hearts;{getCardVal(val-2)}</div>, "s": <div>&spades;{getCardVal(val-2)}</div>};
+    let symbol = {"c": &lt;div>&amp;clubs;{getCardVal(val-2)}&lt;/div>, "d": &lt;div>&amp;diams;{getCardVal(val-2)}&lt;/div>, "h": &lt;div>&amp;hearts;{getCardVal(val-2)}&lt;/div>, "s": &lt;div>&amp;spades;{getCardVal(val-2)}&lt;/div>};
     return symbol[suite];
   }
 
@@ -198,54 +218,77 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
+    &lt;div className="App">
+      &lt;Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
       
-      {isLoggedIn &&
-        <div className="mainContainer">
-          <div className = "playContainer ">
-            <div className="mt-2"></div>
-              <Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+      {isLoggedIn &amp;&amp;
+        &lt;div className="mainContainer">
+          &lt;div className = "playContainer ">
+            &lt;div className="mt-2">&lt;/div>
+              &lt;Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
-              {status === "bid" && role !== null && role !== "Spectator" &&
-                <div>
-                  <div className="spacer "></div>
-                  <Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}></Bid>               
-                </div>
+              {status === "bid" &amp;&amp; role !== null &amp;&amp; role !== "Spectator" &amp;&amp;
+                &lt;div>
+                  &lt;div className="spacer ">&lt;/div>
+                  &lt;Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}>&lt;/Bid>               
+                &lt;/div>
               }
-              {status === "selectPartner" && role != null && getBidWinnerTurn(turn, bidWinner.trump) === role &&
-                <div>
-                  <div className="spacer "></div>
-                  <div className="ml-2">Your partner:</div>
-                  <SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}></SelectPartner>
-                </div>
+              {status === "selectPartner" &amp;&amp; role != null &amp;&amp; getBidWinnerTurn(turn, bidWinner.trump) === role &amp;&amp;
+                &lt;div>
+                  &lt;div className="spacer ">&lt;/div>
+                  &lt;div className="ml-2">Your partner:&lt;/div>
+                  &lt;SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}>&lt;/SelectPartner>
+                &lt;/div>
               }
-              {hand.length > 0 && role !== "Spectator" && status !=="setup" &&
-                  <div className="handContainer">
-                    <div className="spacer "></div>
-                    <div className=" ml-2 ">Your hand:</div>
-                    <div className="cardContainer">
-                      {hand.map(({id,suite,val}) => <button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled = {disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role} key = {id} className = {getCardClass(suite)}>{getCardDisplay(suite, val)} </button>)}
-                    </div>
-                  </div> 
+              {hand.length > 0 &amp;&amp; role !== "Spectator" &amp;&amp; status !=="setup" &amp;&amp;
+                  &lt;div className="handContainer">
+                    &lt;div className="spacer ">&lt;/div>
+                    &lt;div className=" ml-2 ">Your hand:&lt;/div>
+                    &lt;div className="cardContainer">
+                      {hand.map(({id,suite,val}) => &lt;button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled = {disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role} key = {id} className = {getCardClass(suite)}>{getCardDisplay(suite, val)} &lt;/button>)}
+                    &lt;/div>
+                  &lt;/div> 
               }
-          </div>
-          <div className="spacer "></div>
-          <div className = "onlineChatContainer">
-            <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
-          </div>
+          &lt;/div>
+          &lt;div className="spacer ">&lt;/div>
+          &lt;div className = "onlineChatContainer">
+            &lt;Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
+          &lt;/div>
          
-        </div>
+        &lt;/div>
       }   
       
-      <Navbar bg="dark" variant="dark" className="navrow2">
-        {isLoggedIn && <Navbar.Text>{"Room ID: " + room}</Navbar.Text>}
-        <Nav className="mr-auto"></Nav>
-        <Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}</Navbar.Text>
-      </Navbar>
-    </div>
+      &lt;Navbar bg="dark" variant="dark" className="navrow2">
+        {isLoggedIn &amp;&amp; &lt;Navbar.Text>{"Room ID: " + room}&lt;/Navbar.Text>}
+        &lt;Nav className="mr-auto">&lt;/Nav>
+        &lt;Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}&lt;/Navbar.Text>
+      &lt;/Navbar>
+    &lt;/div>
   );
 }
 
 export default App;
 
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#App">App</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Jan 17 2021 16:40:15 GMT+0800 (Singapore Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
