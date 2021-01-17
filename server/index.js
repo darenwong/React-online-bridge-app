@@ -12,17 +12,19 @@ app.get("/", (req, res) => {
     res.send({ response: "Server is up and running. " + users.join(" , ")}).status(200);
   });
 
-
-var rooms = {'main': new Room() };
+// Initialise a global hashtable of rooms with just one room, which is the main room
+let rooms = {'main': new Room() };
+// Initialise a global list of users socket ID
 let users = [];
+// Initialise a global list of usernames
 let usernames = [];
 
 
 io.on('connection', socket => {
   let userID;
   let userRoom = 'main';
+  let userRole = "Spectator";
   users.push(socket.id);
-  var userRole = "Spectator";
   socket.emit('roleSetSuccessful', {role: userRole});
   console.log('a user is connected');
   rooms[userRoom].clients ++;
@@ -55,7 +57,7 @@ io.on('connection', socket => {
     console.log('before', rooms[userRoom].players)
     rooms[userRoom].updatePlayerList(userID);
     rooms[userRoom].updateSpectatorList(name, role);
-    console.log('after', rooms[userRoom].players)
+    console.log('after', rooms[userRoom].players);
     socket.emit('roleSetSuccessful', {role: role});
     updateState(io, rooms, userRoom, usernames);
   })
@@ -63,7 +65,7 @@ io.on('connection', socket => {
 
   socket.on('setBid', (selectedBid) => {
     rooms[userRoom].turns ++;
-    
+
     selectedBid = rooms[userRoom].setBid(selectedBid, userID, userRole);
     
     io.to(userRoom).emit('receivedBid', {selectedBid: selectedBid, turns:rooms[userRoom].turns, bidlog:rooms[userRoom].bidlog});
@@ -125,7 +127,7 @@ io.on('connection', socket => {
         return ;
     }
 
-    if (rooms[userRoom].checkTrumpBrokenStatus(suite) === true){
+    if (rooms[userRoom].turnStatus.trumpBroken === false && rooms[userRoom].checkTrumpBrokenStatus(suite) === true){
         io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
     }
 
@@ -206,7 +208,12 @@ function updateState(io, rooms, userRoom, usernames) {
     console.log("active rooms: ", Object.keys(rooms));
     io.to(userRoom).emit('allUpdateHand');
 
-    rooms[userRoom].checkGameOver();
+    // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
+    console.log('gamepver', rooms[userRoom].checkGameOver(), rooms[userRoom].winner, rooms[userRoom].finalScore);
+    if (rooms[userRoom].checkGameOver() === true && rooms[userRoom].status != 'gameOver'){
+      io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + rooms[userRoom].finalScore + " tricks! Click Restart to play again"});
+      rooms[userRoom].status = "gameOver";
+    }
 
     // Delete empty room except for main room
     if (rooms[userRoom].clients === 0 && userRoom !== 'main') delete rooms[userRoom];
