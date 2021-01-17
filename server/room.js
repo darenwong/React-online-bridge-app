@@ -6,7 +6,6 @@ class Room {
         this.bid=0, 
         this.bidlog=[], 
         this.pass= 0, 
-        this.ipass=0, 
         this.bidWinner={
             userID:null, 
             userRole:null, 
@@ -52,7 +51,6 @@ class Room {
         this.bid = 0;
         this.bidlog = [];
         this.pass = 0;
-        this.ipass = 0;
         this.bidWinner = {
             userID:null, 
             userRole:null, 
@@ -128,23 +126,26 @@ class Room {
     }
 
     handleConsecutivePasses(selectedBid){
+        /*
+        2 cases of consecutive passes to be accounted for:
+            1. This is the first round of bidding and all 4 players pass, thus restarting the game
+            2. This is not the first round of bidding and there are 3 consecutive passes, thus concluding bidding round
+        */
         if (this.pass === 4){
             this.status = "allPass";
         }
     
-        else if (this.pass >= 3){
-            if (this.ipass !== 3) {
-                this.bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
-                this.bidWinner.trump = (Number(selectedBid)-1)%5;
+        else if (this.pass >= 3 && this.turns !== 3){
+            this.bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
+            this.bidWinner.trump = (Number(selectedBid)-1)%5;
 
-                if (this.bidWinner.trump === 4){
-                    this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
-                }
-                else {
-                    this.turns = (["North", "East", "South", "West"].indexOf(this.bidWinner.userRole) + 3)%4;
-                }
-                this.status = "selectPartner";
-           }
+            if (this.bidWinner.trump === 4){
+                this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
+            }
+            else {
+                this.turns = (["North", "East", "South", "West"].indexOf(this.bidWinner.userRole) + 3)%4;
+            }
+            this.status = "selectPartner";
         }
     }
 

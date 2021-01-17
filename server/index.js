@@ -63,7 +63,7 @@ io.on('connection', socket => {
 
   socket.on('setBid', (selectedBid) => {
     rooms[userRoom].turns ++;
-    rooms[userRoom].ipass ++;
+    
     selectedBid = rooms[userRoom].setBid(selectedBid, userID, userRole);
     
     io.to(userRoom).emit('receivedBid', {selectedBid: selectedBid, turns:rooms[userRoom].turns, bidlog:rooms[userRoom].bidlog});
