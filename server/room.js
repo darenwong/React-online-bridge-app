@@ -1,6 +1,19 @@
 class Room {
     /**
-     * Creates a class that stores the room state
+     * Creates a class that stores the room state as follows:
+     * @param {boolean} disable When set to true, stops all players from playing any cards by making cards unclickable.
+     * @param {Number} turns Tracks which player turn to move during bidding and playing phase.
+     * @param {string} status Tracks current game phase. Possible values are: "setup", "start", "bid", "allPass", "selectPartner", "play", "gameOver".
+     * @param {Number} bid Store the current bid.
+     * @param {Array} bidlog Store all historical bid.
+     * @param {Object} bidWinner Store details of user who won the bid, and details about the winning bid and partner.
+     * @param {Object} playerHands Store Cards Object in each player hand.
+     * @param {Object} players Hash table of role to player name.
+     * @param {Array} spectators List of all spectators name.
+     * @param {Number} clients Number of clients connected to the room.
+     * @param {Object} turnStatus Tracks board status like cards played, trumpBroken status.
+     * @param {Array} winner Store the names of the winners.
+     * @param {Number} finalScore Store the number of tricks that winner has won.
      */
     constructor() {
         this.disable=false, 
@@ -15,12 +28,12 @@ class Room {
             winningBid:null, 
             trump: null, 
             partner: {
+                "suite":null,
                 "val":null,
-                "role":null
+                "role":null // To Do: Put this as a private state, do not send to client
             }
         }, 
-        this.partnerRole=null, 
-        this.playerHands={
+        this.playerHands={ // To Do: Put this as a private state, do not send to client
             "North":[],
             "East":[],
             "South":[],
@@ -252,17 +265,17 @@ class Room {
      * @return {boolen} true if game is over
      */
     checkGameOver() {
-        if (this.partnerRole !== null && this.allThirteenRoundsPlayed() === true) {
+        if (this.bidWinner.partner.role !== null && this.allThirteenRoundsPlayed() === true) {
             // Determine who are the winners and their score
             let finalWinner = this.getFinalWinner();
             switch(finalWinner) {
                 case "BidWinner and Partner":
-                    this.winner = [this.partnerRole, this.bidWinner.userRole];
+                    this.winner = [this.bidWinner.partner.role, this.bidWinner.userRole];
                     this.finalScore = this.getBidWinnerTeamScore();                    
                     break;
 
                 case "Defenders":
-                    this.winner = ["North", "East", "South", "West"].filter(role => role !== this.partnerRole && role !== this.bidWinner.userRole);
+                    this.winner = ["North", "East", "South", "West"].filter(role => role !== this.bidWinner.partner.role && role !== this.bidWinner.userRole);
                     this.finalScore = this.getDefenderTeamScore();
                     break;
             };
@@ -285,9 +298,8 @@ class Room {
      */
     getFinalWinner() {
         let finalWinner = null;
-
         // Bidwinner + Partner wins if they won more than 6 + the number of bids. Else, the defenders won 
-        if (this.getBidWinnerTeamScore >= this.bidWinner.winningBid + 6) {
+        if (this.getBidWinnerTeamScore() >= this.bidWinner.winningBid + 6) {
             finalWinner = "BidWinner and Partner"
         } else {
             finalWinner = "Defenders"
@@ -300,7 +312,7 @@ class Room {
      * @return {Number} Total score of Bidwineer and Partner
      */
     getBidWinnerTeamScore() {
-        return this.scoreboard[this.partnerRole] + this.scoreboard[this.bidWinner.userRole];
+        return this.scoreboard[this.bidWinner.partner.role] + this.scoreboard[this.bidWinner.userRole];
     }
 
     /**
