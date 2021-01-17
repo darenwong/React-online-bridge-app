@@ -37,11 +37,9 @@ function App() {
   useEffect(() => {
     socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
 
-    socket.on('updateState', ({room, status, disable, clients, turns, bid, bidWinner, bidlog, playerHands, players, receiver, spectators, turnStatus, scoreboard, winner}) => {
+    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, players, spectators, turnStatus, scoreboard, winner}) => {
 
       setBidWinner(bidWinner);
-
-      //console.log("update", status, turns, bid, bidWinner, bidlog, playerHands, players, receiver, spectators, turnStatus, scoreboard)
       setStatus(status);
       setTurn(turns);
       setBid(bid);
@@ -61,7 +59,6 @@ function App() {
 
     socket.on('updateHand', hand => {
       setHand(hand);
-      ////console.log("deal player hand ", hand)
     })
 
     socket.on('receivedMsg', (data) => {
@@ -70,18 +67,14 @@ function App() {
 
     socket.on('roleSetSuccessful', (data) => {
       setRole(data.role);
-      ////console.log("Set " + name + " to " + data.role);
     })
 
     socket.on('receivedBid', ({selectedBid, turns, bidlog}) =>{
       setBid(selectedBid);
       setBidLog(bidlog);
       setTurn(turns);
-      //console.log("receiveBid " + selectedBid);
     })
   }, []);
-
-
 
   function handleSendMsg(event) {
     socket.emit('sendMsg', {message: msg, username: name});
@@ -89,8 +82,8 @@ function App() {
     event.preventDefault();
   }
 
-  function handleSelectRole(data, event) {
-    socket.emit('setRole', {role: data, user: name});
+  function handleSelectRole(role, event) {
+    socket.emit('setRole', {role: role, user: name});
   }
 
   function handleStart(event) {
@@ -99,69 +92,83 @@ function App() {
   }
 
   function handleSelectBid(event) {
-    //console.log(event);
     socket.emit('setBid', event);
   }
 
   function handleSelectPass(event) {
-    //console.log(event);
     event.target.disabled = true;
     socket.emit('setBid', "pass");
   }
 
   function handleSelectPartner(selectedPartner) {
-    //console.log("Selected Partner: ", selectedPartner);
     socket.emit('setPartner', {"suite":['c','d','h','s'][Math.floor(selectedPartner/13)],"val":selectedPartner%13,"role":selectedPartner});
   }
 
   function handleClickCard(event, id,suite,val){
-    //console.log("play card", id, suite, val)
     setDisable(true);
     event.target.disabled = true;
-    socket.emit("requestPlayCard", {id:id,suite:suite,val:val})
+    socket.emit("requestPlayCard", {id:id,suite:suite,val:val});
   }
 
   function checkValidCard(id,suite,val) {
-    //console.log("check valid "+ suite+val);
-    if (bidWinner.trump === 4){
-      if (turnStatus.board.length === 0) return true;
-      else{
-        if (turnStatus.start === suite) return true;
-        else {
-          for (let i = 0; i < hand.length; i++) {
-            if (hand[i].suite === turnStatus.start) return false;
-          }
-          return true
-        }
-      }
+    let boardScenario = getBoardAndCardStatus(suite);
+    switch(boardScenario) {
+      case 0: return true; //NO Trump game, board is EMPTY
+      case 1: return true; //NO Trump game, board is NOT EMPTY, card suit matches board starting suit
+      case 2: return !handHasBoardStartingSuit(); //NO Trump game, board is NOT EMPTY, card suit does NOT match board starting suit. If hand contains other cards with board starting suit, player must follow board starting suit.
+      case 3: return true; //Trump game, board is EMPTY, card suit is Trump suit, but Trump was broken
+      case 4: return !handHasNonTrumpSuit(); //Trump game, board is EMPTY, card suit is Trump suit, but Trump was NOT broken
+      case 5: return true; //Trump game, board is EMPTY, card suit is NOT Trump suit
+      case 6: return true; //Trump game, board is NOT EMPTY, card suit matches board starting suit
+      case 7: return !handHasBoardStartingSuit(); //Trump game, board is NOT EMPTY, card suit does NOT match board starting suit. If hand contains other cards with board starting suit, player must follow board starting suit.
+      default: throw "Error: Undefined boardScenario encountered";
     }
-
-    if (turnStatus.board.length === 0){
-      if (["c","d","h","s"].indexOf(suite) === bidWinner.trump){
-        if (turnStatus.trumpBroken === true) return true
-        else {
-          for (let i = 0; i < hand.length; i++) {
-            //console.log(hand[i].suite, bidWinner.trump)
-            if (["c","d","h","s"].indexOf(hand[i].suite) !== bidWinner.trump) return false;
-          }
-          return true;
-        };
-      }
-      else return true;
-    }
-    else {
-      if (turnStatus.start === suite) return true;
-      else {
-        for (let i = 0; i < hand.length; i++) {
-          if (hand[i].suite === turnStatus.start) return false;
-        }
-        return true;
-      }
-    }
-    //return false;
   }
 
+  function getBoardAndCardStatus(suite) {
+    // if this is a NO Trump game
+    if (bidWinner.trump === 4){
+      // and board is EMPTY
+      if (turnStatus.board.length === 0) return 0;
+      // and board is NOT EMPTY, and card suit is the same as board starting suit
+      else if (turnStatus.start === suite) return 1;
+      // and board is NOT EMPTY, and card suit is different from board starting suit
+      else { return 2; }
+    }
+    // if this is a Trump game and board is EMPTY
+    else if (turnStatus.board.length === 0){
+      // and card suit is trump suit
+      if (["c","d","h","s"].indexOf(suite) === bidWinner.trump){
+        // and trump was broken
+        if (turnStatus.trumpBroken === true) return 3
+        // and trump was NOT broken
+        else { return 4; };
+      }
+      // and card is NOT a trump suit
+      else return 5;
+    }
+    // if this is a Trump game and board is NOT EMPTY
+    else {
+      // and card matches board starting suit
+      if (turnStatus.start === suite) return 6;
+      // and card does NOT match board starting suit
+      else { return 7; };
+    }   
+  }
 
+  function handHasBoardStartingSuit(){
+    for (let i = 0; i < hand.length; i++) {
+      if (hand[i].suite === turnStatus.start) return true; //hand contains card with board starting suit. 
+    }
+    return false; //hand ran out of board starting suit.
+  }
+
+  function handHasNonTrumpSuit(){
+    for (let i = 0; i < hand.length; i++) {
+      if (["c","d","h","s"].indexOf(hand[i].suite) !== bidWinner.trump) return true; //hand contains non-trump suit
+    }
+    return false; //hand only have trump suit left
+  }
 
   function getNumberPlayers() {
     let count = 0;
@@ -176,7 +183,6 @@ function App() {
   }
 
   function getBidWinnerTurn(turn, trump) {
-    //console.log("if no trump: ",Number(trump) , Number(trump) === 4 , ["North", "East", "South", "West"][Number(turn)%4], " else: ", ["North", "East", "South", "West"][Number(turn+1)%4])
     return (Number(trump) === 4 ? ["North", "East", "South", "West"][Number(turn)%4]: ["North", "East", "South", "West"][(Number(turn)+1)%4]);
   }
 
@@ -224,7 +230,7 @@ function App() {
                     <div className="cardContainer">
                       {hand.map(({id,suite,val}) => <button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled = {disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role} key = {id} className = {getCardClass(suite)}>{getCardDisplay(suite, val)} </button>)}
                     </div>
-                  </div>
+                  </div> 
               }
           </div>
           <div className="spacer "></div>

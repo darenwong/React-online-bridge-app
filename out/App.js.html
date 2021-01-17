@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: App.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: App.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useState, useEffect} from 'react'
+import { Navbar,Nav} from 'react-bootstrap'
+import io from 'socket.io-client'
+import './App.css';
+import Messages from './components/messages.jsx'
+import Toolbar from './components/toolbar.jsx'
+import Board from './components/board.jsx'
+import Bid from './components/bid.jsx'
+import SelectPartner from './components/selectPartner.jsx'
+const socket = io('http://localhost:4000');
+//const socket = io('https://floating-bridge-online.herokuapp.com/');
+
+/**
+ * Create App Object
+ */
+function App() {
+  const [name, setName] = useState('');
+  const [room, setRoom] = useState('');
+  const [usernames, setUsernames] = useState([]);
+  const [noClients, setNoClients] = useState(''); 
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [chat, setChat] = useState([]);
+
+  const [status, setStatus] = useState('setup');
+  const [turn, setTurn] = useState(0);
+  const [role, setRole] = useState('');
+  const [players, setPlayers] = useState({"North":null,"South":null,"East":null,"West":null});
+  const [spectators, setSpectators] = useState([]);
+  const [bid, setBid] = useState(0);
+  const [bidlog, setBidLog] = useState([]);
+  const [bidWinner, setBidWinner] = useState({"userID":null, "userRole":null, "winningBid":null, "trump": null, "partner": {"val":null,"role":null}});
+  const [hand, setHand] = useState([]); 
+
+  const [turnStatus, setTurnStatus] =  useState({start: null, board:[], trumpBroken:false})
+  const [scoreboard, setScoreboard] = useState({"North":0,"East":0,"South":0,"West":0})
+  const [winner, setWinner] = useState([]);
+  const [disable, setDisable] = useState(false);
+
+  useEffect(() => {
+    socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
+
+    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, players, spectators, turnStatus, scoreboard, winner}) => {
+
+      setBidWinner(bidWinner);
+      setStatus(status);
+      setTurn(turns);
+      setBid(bid);
+      setBidLog(bidlog);
+      setPlayers(players);
+      setSpectators(spectators);
+      setTurnStatus(turnStatus);
+      setScoreboard(scoreboard);
+      setWinner(winner);
+      setNoClients(clients);
+      setDisable(disable); 
+    });
+
+    socket.on('allUpdateHand' , () => {
+      socket.emit('updateMyHand');
+    })
+
+    socket.on('updateHand', hand => {
+      setHand(hand);
+    })
+
+    socket.on('receivedMsg', (data) => {
+      setChat(chat => [...chat,data]);
+    })
+
+    socket.on('roleSetSuccessful', (data) => {
+      setRole(data.role);
+    })
+
+    socket.on('receivedBid', ({selectedBid, turns, bidlog}) =>{
+      setBid(selectedBid);
+      setBidLog(bidlog);
+      setTurn(turns);
+    })
+  }, []);
+
+
+  /**
+   * Send request to server to broadcast chat message
+   * @param {*} event 
+   */
+  function handleSendMsg(event) {
+    socket.emit('sendMsg', {message: msg, username: name});
+    setMsg('');
+    event.preventDefault();
+  }
+
+  function handleSelectRole(role, event) {
+    socket.emit('setRole', {role: role, user: name});
+  }
+
+  function handleStart(event) {
+    event.target.disabled = true;
+    socket.emit('requestStart');
+  }
+
+  function handleSelectBid(event) {
+    socket.emit('setBid', event);
+  }
+
+  function handleSelectPass(event) {
+    event.target.disabled = true;
+    socket.emit('setBid', "pass");
+  }
+
+  function handleSelectPartner(selectedPartner) {
+    socket.emit('setPartner', {"suite":['c','d','h','s'][Math.floor(selectedPartner/13)],"val":selectedPartner%13,"role":selectedPartner});
+  }
+
+  function handleClickCard(event, id,suite,val){
+    setDisable(true);
+    event.target.disabled = true;
+    socket.emit("requestPlayCard", {id:id,suite:suite,val:val})
+  }
+
+  function checkValidCard(id,suite,val) {
+    if (bidWinner.trump === 4){
+      if (turnStatus.board.length === 0) return true;
+      else{
+        if (turnStatus.start === suite) return true;
+        else {
+          for (let i = 0; i &lt; hand.length; i++) {
+            if (hand[i].suite === turnStatus.start) return false;
+          }
+          return true
+        }
+      }
+    }
+
+    if (turnStatus.board.length === 0){
+      if (["c","d","h","s"].indexOf(suite) === bidWinner.trump){
+        if (turnStatus.trumpBroken === true) return true
+        else {
+          for (let i = 0; i &lt; hand.length; i++) {
+            //console.log(hand[i].suite, bidWinner.trump)
+            if (["c","d","h","s"].indexOf(hand[i].suite) !== bidWinner.trump) return false;
+          }
+          return true;
+        };
+      }
+      else return true;
+    }
+    else {
+      if (turnStatus.start === suite) return true;
+      else {
+        for (let i = 0; i &lt; hand.length; i++) {
+          if (hand[i].suite === turnStatus.start) return false;
+        }
+        return true;
+      }
+    }
+    //return false;
+  }
+
+
+
+  function getNumberPlayers() {
+    let count = 0;
+    for (const key of Object.keys(players)) {
+      if(players[key] !== null) count ++;
+    }
+    return count;
+  }
+
+  function getTurn(turn) {
+    return ["North", "East", "South", "West"][turn%4];
+  }
+
+  function getBidWinnerTurn(turn, trump) {
+    return (Number(trump) === 4 ? ["North", "East", "South", "West"][Number(turn)%4]: ["North", "East", "South", "West"][(Number(turn)+1)%4]);
+  }
+
+  function getCardVal(val) {
+    return ["2","3","4","5","6","7","8","9","10","J","Q","K","A"][val];
+  }
+
+  function getCardDisplay(suite, val) {
+    let symbol = {"c": &lt;div>&amp;clubs;{getCardVal(val-2)}&lt;/div>, "d": &lt;div>&amp;diams;{getCardVal(val-2)}&lt;/div>, "h": &lt;div>&amp;hearts;{getCardVal(val-2)}&lt;/div>, "s": &lt;div>&amp;spades;{getCardVal(val-2)}&lt;/div>};
+    return symbol[suite];
+  }
+
+  function getCardClass(suite){
+    let temp = "btn btn-sm m-2 ";
+    return ((suite === "c" || suite === "s") ? temp + "btn-dark" : temp + "btn-danger");
+  }
+
+  return (
+    &lt;div className="App">
+      &lt;Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
+      
+      {isLoggedIn &amp;&amp;
+        &lt;div className="mainContainer">
+          &lt;div className = "playContainer ">
+            &lt;div className="mt-2">&lt;/div>
+              &lt;Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              
+              {status === "bid" &amp;&amp; role !== null &amp;&amp; role !== "Spectator" &amp;&amp;
+                &lt;div>
+                  &lt;div className="spacer ">&lt;/div>
+                  &lt;Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}>&lt;/Bid>               
+                &lt;/div>
+              }
+              {status === "selectPartner" &amp;&amp; role != null &amp;&amp; getBidWinnerTurn(turn, bidWinner.trump) === role &amp;&amp;
+                &lt;div>
+                  &lt;div className="spacer ">&lt;/div>
+                  &lt;div className="ml-2">Your partner:&lt;/div>
+                  &lt;SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}>&lt;/SelectPartner>
+                &lt;/div>
+              }
+              {hand.length > 0 &amp;&amp; role !== "Spectator" &amp;&amp; status !=="setup" &amp;&amp;
+                  &lt;div className="handContainer">
+                    &lt;div className="spacer ">&lt;/div>
+                    &lt;div className=" ml-2 ">Your hand:&lt;/div>
+                    &lt;div className="cardContainer">
+                      {hand.map(({id,suite,val}) => &lt;button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled = {disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role} key = {id} className = {getCardClass(suite)}>{getCardDisplay(suite, val)} &lt;/button>)}
+                    &lt;/div>
+                  &lt;/div> 
+              }
+          &lt;/div>
+          &lt;div className="spacer ">&lt;/div>
+          &lt;div className = "onlineChatContainer">
+            &lt;Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
+          &lt;/div>
+         
+        &lt;/div>
+      }   
+      
+      &lt;Navbar bg="dark" variant="dark" className="navrow2">
+        {isLoggedIn &amp;&amp; &lt;Navbar.Text>{"Room ID: " + room}&lt;/Navbar.Text>}
+        &lt;Nav className="mr-auto">&lt;/Nav>
+        &lt;Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}&lt;/Navbar.Text>
+      &lt;/Navbar>
+    &lt;/div>
+  );
+}
+
+export default App;
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#App">App</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Jan 17 2021 16:40:15 GMT+0800 (Singapore Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
