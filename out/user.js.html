@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: card.js</title>
+    <title>JSDoc: Source: user.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: card.js</h1>
+    <h1 class="page-title">Source: user.js</h1>
 
     
 
@@ -26,22 +26,24 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>class Card {
+            <pre class="prettyprint source linenums"><code>class User {
     /**
-     * Creates a Card Object with following attributes:
-     * @param {Number} id 
-     * @param {string} suite 
-     * @param {Number} val 
+     * Creates a User Object to store user data
+     * @param {string} socketID 
+     * @param {string} name 
+     * @param {string} room 
+     * @param {string} role 
      */
-    constructor(id, suite, val) {
-        this.id = id;
-        this.suite = suite;
-        this.val = val;
+    constructor(socketID, name, room, role) {
+        this.socketID = socketID;
+        this.name = name;
+        this.room = room;
+        this.role = role;
     }
 }
 
 
-module.exports = Card;</code></pre>
+module.exports = User;</code></pre>
         </article>
     </section>
 

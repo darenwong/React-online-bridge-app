@@ -28,7 +28,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Room<span class="signature">()</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Room<span class="signature">(disable, turns, status, bid, bidlog, bidWinner, playerHands, players, spectators, clients, turnStatus, winner, finalScore)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -41,7 +41,7 @@
     
 
     
-    <h4 class="name" id="Room"><span class="type-signature"></span>new Room<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Room"><span class="type-signature"></span>new Room<span class="signature">(disable, turns, status, bid, bidlog, bidWinner, playerHands, players, spectators, clients, turnStatus, winner, finalScore)</span><span class="type-signature"></span></h4>
     
 
     
@@ -49,7 +49,7 @@
 
 
 <div class="description">
-    Creates a class that stores the room state
+    Creates a class that stores the room state as follows:
 </div>
 
 
@@ -58,6 +58,331 @@
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>disable</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">When set to true, stops all players from playing any cards by making cards unclickable.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>turns</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Tracks which player turn to move during bidding and playing phase.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>status</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Tracks current game phase. Possible values are: "setup", "start", "bid", "allPass", "selectPartner", "play", "gameOver".</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>bid</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Store the current bid.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>bidlog</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Store all historical bid.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>bidWinner</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Store details of user who won the bid, and details about the winning bid and partner.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>playerHands</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Store Cards Object in each player hand.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>players</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Hash table of role to player name.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>spectators</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">List of all spectators name.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>clients</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Number of clients connected to the room.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>turnStatus</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Tracks board status like cards played, trumpBroken status.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>winner</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Store the names of the winners.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>finalScore</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Store the number of tricks that winner has won.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -93,7 +418,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line5">line 5</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line18">line 18</a>
     </li></ul></dd>
     
 
@@ -201,7 +526,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line278">line 278</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line291">line 291</a>
     </li></ul></dd>
     
 
@@ -311,7 +636,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line254">line 254</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line267">line 267</a>
     </li></ul></dd>
     
 
@@ -470,7 +795,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line183">line 183</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line196">line 196</a>
     </li></ul></dd>
     
 
@@ -629,7 +954,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line197">line 197</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line210">line 210</a>
     </li></ul></dd>
     
 
@@ -739,7 +1064,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line302">line 302</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line314">line 314</a>
     </li></ul></dd>
     
 
@@ -849,7 +1174,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line310">line 310</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line322">line 322</a>
     </li></ul></dd>
     
 
@@ -959,7 +1284,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line286">line 286</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line299">line 299</a>
     </li></ul></dd>
     
 
@@ -1069,7 +1394,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line222">line 222</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line235">line 235</a>
     </li></ul></dd>
     
 
@@ -1228,7 +1553,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line159">line 159</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line172">line 172</a>
     </li></ul></dd>
     
 
@@ -1316,7 +1641,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line55">line 55</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line68">line 68</a>
     </li></ul></dd>
     
 
@@ -1499,7 +1824,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line135">line 135</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line148">line 148</a>
     </li></ul></dd>
     
 
@@ -1681,7 +2006,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line209">line 209</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line222">line 222</a>
     </li></ul></dd>
     
 
@@ -1818,7 +2143,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line96">line 96</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line109">line 109</a>
     </li></ul></dd>
     
 
@@ -1978,7 +2303,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="room.js.html">room.js</a>, <a href="room.js.html#line109">line 109</a>
+        <a href="room.js.html">room.js</a>, <a href="room.js.html#line122">line 122</a>
     </li></ul></dd>
     
 
@@ -2024,13 +2349,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Card.html">Card</a></li><li><a href="Deck.html">Deck</a></li><li><a href="Room.html">Room</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Card.html">Card</a></li><li><a href="Deck.html">Deck</a></li><li><a href="Room.html">Room</a></li><li><a href="User.html">User</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Jan 17 2021 13:47:15 GMT+0800 (Singapore Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Jan 17 2021 16:01:33 GMT+0800 (Singapore Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -201,8 +201,9 @@ io.on('connection', socket => {
         // For each player, search through all 13 cards in hand
         for (i = 0; i < 13; i++){
             if (Number(rooms[user.room].playerHands[player][i].id) === Number(partnerID)){
-                rooms[user.room].bidWinner.partner = {suite: suite, val:val};
-                rooms[user.room].partnerRole = player;
+                rooms[user.room].bidWinner.partner.suite = suite;
+                rooms[user.room].bidWinner.partner.val = val;
+                rooms[user.room].bidWinner.partner.role = player;
                 rooms[user.room].status = "play";
                 console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
                 io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.suite] })
