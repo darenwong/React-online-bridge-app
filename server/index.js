@@ -1,7 +1,7 @@
 // Import Room, Deck and User Class
 const Room = require('./room');
 const Deck = require('./deck');
-const User = require('./user')
+const User = require('./user');
 
 // Set up web socket on server side
 const app = require('express')();
@@ -12,7 +12,7 @@ const io = require('socket.io')(http, {
 });
 
 app.get("/", (req, res) => {
-    res.send({ response: "Server is up and running. " + users.join(" , ")}).status(200);
+    res.send(users).status(200);
   });
 
 // Initialise a global directory of rooms with just one room, which is the main room
@@ -28,8 +28,7 @@ io.on('connection', socket => {
   let user = new User(socket.id, null, 'main', 'Spectator');
 
   // Add user socket id to a global socket id list
-  users.push(socket.id);
-
+  users.push(user);
   // Let user know he is not a spectator in the main room
   socket.emit('roleSetSuccessful', {role: user.role});
 
@@ -219,12 +218,11 @@ io.on('connection', socket => {
     // Remove user from global username list
     if (usernames.indexOf(user.name) > -1) usernames.splice(usernames.indexOf(user.name),1);
 
-    // Remove user from global socket ID list
-    let indexID = users.indexOf(socket.id);
-    if (indexID > -1) {
-        users.splice(indexID, 1);
+    // Remove user from global User Object list
+    for (let i = 0; i<users.length; i++){
+      if (users[i].socketID === socket.id) {users.splice(i,1);}
     }
-    
+
     // Update number of clients
     rooms[user.room].clients --;
     if (user.room !== "main") rooms["main"].clients --;
