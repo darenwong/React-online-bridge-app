@@ -5,7 +5,7 @@ function Toolbar(props) {
     const [namePlaceholder, setNamePlaceholder] = useState("Enter your name");
     const [roomPlaceholder, setRoomPlaceholder] = useState("Enter room ID");
 
-    function handleSetUsername(event) {
+    async function handleSetUsername(event) {
         event.preventDefault();
         //console.log('try: ', props.name, props.players, props.spectators, props.usernames)
         if (props.name === "") setNamePlaceholder("Can't be empty");
@@ -24,6 +24,13 @@ function Toolbar(props) {
         }
         else {
             //console.log('success: ', props.name, props.room);
+            const body = {name: props.name};
+            const response = await fetch("http://localhost:4000/", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body),
+            })
+            console.log('success: ', response);
             props.socket.emit('setUsernameRoom', {name:props.name, room:props.room});
             props.setIsLoggedIn(true);
         }

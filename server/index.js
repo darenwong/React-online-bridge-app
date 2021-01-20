@@ -4,7 +4,14 @@ const Deck = require('./deck');
 const User = require('./user');
 
 // Set up web socket on server side
-const app = require('express')();
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const pool = require('./db');
+
+app.use(cors());
+app.use(express.json());
+
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors:true,
@@ -14,6 +21,13 @@ const io = require('socket.io')(http, {
 app.get("/", (req, res) => {
     res.send(users).status(200);
   });
+
+app.post("/", async (req, res) => {
+  console.log('req',req.body);
+  const {name} = req.body;
+  const newName = await pool.query("INSERT INTO testtable (testname) VALUES ($1)",[name]);
+  res.json(newName);
+});
 
 // Initialise a global directory of rooms with just one room, which is the main room
 let rooms = {'main': new Room() };
