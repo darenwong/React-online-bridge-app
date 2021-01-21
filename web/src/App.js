@@ -81,9 +81,22 @@ function App() {
     setMsg('');
     event.preventDefault();
   }
-
+/*
   function handleSelectRole(role, event) {
     socket.emit('setRole', {role: role, user: name});
+  }
+*/
+  function handleSelectRole(role, event) {
+    switch(event) {
+      case "AI":
+        socket.emit('setRole', {role: role, user: "AI", type: event});
+        break
+      case "Human":
+        socket.emit('setRole', {role: role, user: name, type: event});
+        break
+      default:
+        console.log('Error: Unidentified role selection', role, event);
+    }
   }
 
   function handleStart(event) {
@@ -216,7 +229,7 @@ function App() {
                   <Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}></Bid>               
                 </div>
               }
-              {status === "selectPartner" && role != null && getBidWinnerTurn(turn, bidWinner.trump) === role &&
+              {status === "selectPartner" && role != null && getTurn(turn) === role &&
                 <div>
                   <div className="spacer "></div>
                   <div className="ml-2">Your partner:</div>

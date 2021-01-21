@@ -106,8 +106,8 @@ class Room {
      * Check if user is in room player list. If yes, remove user from list
      * @param {string} userID 
      */
-    updatePlayerList(userID){
-        let userPlayAreaLocation = Object.keys(this.players).find(key => this.players[key] === userID);
+    updatePlayerList(user){
+        let userPlayAreaLocation = Object.keys(this.players).find(key => this.players[key] && this.players[key].name === user.name);
         // If user was one of the players, remove him from player list 
         if (userPlayAreaLocation !== undefined) {
             this.players[userPlayAreaLocation] = null;
@@ -119,18 +119,18 @@ class Room {
      * @param {string} name 
      * @param {string} role 
      */
-    updateSpectatorList(name, role){
-        let index = this.spectators.indexOf(name);
+    updateSpectatorList(user){
+        let index = this.spectators.indexOf(user.name);
 
-        switch(role) {
+        switch(user.role) {
             case "Spectator":
                 // If user was not a spectator, add him to spectator list
                 if (index < 0){
-                    this.spectators.push(name);
+                    this.spectators.push(user.name);
                 }
                 break;       
             default:
-                if (role !== null) {this.players[role] = name;}
+                if (user.role !== null) {this.players[user.role] = user;}
                 // If user was a spectator, remove him from spectator list
                 if ( index > -1){
                     this.spectators.splice(index, 1);
@@ -177,13 +177,7 @@ class Room {
         else if (this.pass >= 3 && this.turns !== 3){
             this.bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
             this.bidWinner.trump = (Number(selectedBid)-1)%5;
-
-            if (this.bidWinner.trump === 4){
-                this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
-            }
-            else {
-                this.turns = (["North", "East", "South", "West"].indexOf(this.bidWinner.userRole) + 3)%4;
-            }
+            this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
             this.status = "selectPartner";
         }
     }

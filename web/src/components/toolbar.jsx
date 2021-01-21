@@ -24,13 +24,13 @@ function Toolbar(props) {
         }
         else {
             //console.log('success: ', props.name, props.room);
-            const body = {name: props.name};
+            /*const body = {name: props.name};
             const response = await fetch("http://localhost:4000/", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(body),
             })
-            console.log('success: ', response);
+            console.log('success: ', response);*/
             props.socket.emit('setUsernameRoom', {name:props.name, room:props.room});
             props.setIsLoggedIn(true);
         }

@@ -2,12 +2,14 @@
 const Room = require('./room');
 const Deck = require('./deck');
 const User = require('./user');
+const AI = require('./ai');
 
 // Set up web socket on server side
 const express = require('express');
 const app = express();
 const cors = require('cors');
 const pool = require('./db');
+const { RSA_PKCS1_PADDING } = require('constants');
 
 app.use(cors());
 app.use(express.json());
@@ -21,14 +23,14 @@ const io = require('socket.io')(http, {
 app.get("/", (req, res) => {
     res.send(users).status(200);
   });
-
+/*
 app.post("/", async (req, res) => {
   console.log('req',req.body);
   const {name} = req.body;
   const newName = await pool.query("INSERT INTO testtable (testname) VALUES ($1)",[name]);
   res.json(newName);
 });
-
+*/
 // Initialise a global directory of rooms with just one room, which is the main room
 let rooms = {'main': new Room() };
 // Initialise a global list of users socket ID
@@ -83,16 +85,28 @@ io.on('connection', socket => {
   })
 
   // Add an event listener for when user wants to change role
-  socket.on('setRole', ({role, user:name}) => {
-    // Set user role
-    user.role = role;
+  socket.on('setRole', ({role, type}) => {
 
-    // Update the Player and Spectator list
-    rooms[user.room].updatePlayerList(user.name);
-    rooms[user.room].updateSpectatorList(user.name, user.role);
+    switch(type){
+      case "AI":
+        rooms[user.room].players[role] = new AI("AI",user.room,role);
+        socket.join(user.room);
+        break
+      case "Human":
+        // Set user role
+        user.role = role;
+        // Update the Player and Spectator list
+        rooms[user.room].updatePlayerList(user);
+        rooms[user.room].updateSpectatorList(user);
 
-    // Let user know that his role has been successfully set
-    socket.emit('roleSetSuccessful', {role: role});
+        // Let user know that his role has been successfully set
+        socket.emit('roleSetSuccessful', {role: role});
+        break
+      default:
+        console.log('Error: Unidentified role detected, neither AI or human')
+    }
+    
+    //console.log('setRole', role, type, rooms[user.room].players);
     updateState(io, rooms, user.room, usernames);
   })
 
@@ -115,7 +129,7 @@ io.on('connection', socket => {
     deck.shuffle();
     rooms[user.room].playerHands = deck.deal(rooms[user.room].playerHands);
 
-    console.log("players: ", rooms[user.room].players)
+    //console.log("players: ", rooms[user.room].players)
     updateState(io, rooms, user.room, usernames);
   })
 
@@ -136,14 +150,6 @@ io.on('connection', socket => {
     // Broadcast to room that bid is received by server
     io.to(user.room).emit('receivedBid', {selectedBid: selectedBid, turns:rooms[user.room].turns, bidlog:rooms[user.room].bidlog});
 
-    // Determine if there have been consecutive passes. If yes, conclude the bidding round
-    rooms[user.room].handleConsecutivePasses(selectedBid);
-
-    // If bidding round has ended, let room know that bidding has ended, partner selection phase starts
-    if (rooms[user.room].status === "selectPartner"){
-        io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[user.room].bidWinner.trump] + ", bid: "+rooms[user.room].bidWinner.winningBid});
-        io.to(user.room).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[user.room].bidWinner.userRole + " selects a partner"});
-    }
     
     updateState(io, rooms, user.room, usernames);
   })
@@ -220,6 +226,7 @@ io.on('connection', socket => {
                 rooms[user.room].status = "play";
                 console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
                 io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.suite] })
+                if (rooms[user.room].bidWinner.trump !== 4) {rooms[user.room].turns++;};
                 updateState(io, rooms, user.room, usernames);
                 return ;
             }
@@ -242,8 +249,9 @@ io.on('connection', socket => {
     if (user.room !== "main") rooms["main"].clients --;
     
     // Update player and spectator list
-    rooms[user.room].updatePlayerList(user.name);
-    rooms[user.room].updateSpectatorList(user.name, null);
+    rooms[user.room].updatePlayerList(user);
+    user.role = null;
+    rooms[user.room].updateSpectatorList(user);
 
     updateState(io, rooms, user.room, usernames);
     console.log('user is disconnected');
@@ -259,8 +267,19 @@ http.listen(process.env.PORT || 4000, function() {
 
 
 function updateState(io, rooms, userRoom, usernames) {
-  console.log("active rooms: ", Object.keys(rooms));
+  //console.log("active rooms: ", Object.keys(rooms));
   io.to(userRoom).emit('allUpdateHand');
+
+  if (rooms[userRoom].status === "bid"){
+    // Determine if there have been consecutive passes. If yes, conclude the bidding round
+    rooms[userRoom].handleConsecutivePasses(rooms[userRoom].bid);
+
+    // If bidding round has ended, let room know that bidding has ended, partner selection phase starts
+    if (rooms[userRoom].status === "selectPartner"){
+        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
+        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
+    }
+  }
 
   // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
   if (rooms[userRoom].checkGameOver() === true && rooms[userRoom].status != 'gameOver'){
@@ -273,8 +292,25 @@ function updateState(io, rooms, userRoom, usernames) {
   
   io.to(userRoom).emit('updateState', (rooms[userRoom]));
   io.emit('updateGlobalID', usernames);
+
+  // Handle AI turn and action
+  if (rooms[userRoom] && rooms[userRoom].status !== "setup"){
+    let currentTurnPlayer = rooms[userRoom].players[getTurn(rooms[userRoom].turns)];
+    if (currentTurnPlayer && currentTurnPlayer.type === "AI"){
+      //console.log("AI Turn");
+      currentTurnPlayer.getAction(rooms[userRoom], io, userRoom, 
+        callbackUpdate = (newState)=>{
+          rooms[userRoom] = newState;
+          setTimeout(()=>updateState(io, rooms, userRoom, usernames), 100);
+        });
+    }
+  }
 }
   
+function getTurn(turn) {
+  return ["North", "East", "South", "West"][turn%4];
+}
 
-
-
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

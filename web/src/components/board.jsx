@@ -19,6 +19,18 @@ function Board(props) {
         }
     };
 
+    function getVariantName(role){
+        if (props.status === "setup"){
+            return "primary"
+        }
+        else if (props.turn === role){
+            return "warning"
+        }
+        else {
+            return "secondary"
+        }
+    };
+
     function getCardPlayed(role){
         for (let i = 0; i < props.turnStatus.board.length; i++) {
             if (props.turnStatus.board[i].user === role){
@@ -35,7 +47,7 @@ function Board(props) {
     }
 
     function getPlayerName(role){
-        return (props.players[role] === null) ? '' : ': ' + props.players[role]; 
+        return (props.players[role] === null) ? '' : ': ' + props.players[role].name; 
     }
 
     function getDeclarer(){
@@ -63,6 +75,23 @@ function Board(props) {
         return (bid === "pass") ? <Dropdown.Item key={index} disabled ={true}>{userRole + ": Pass"}</Dropdown.Item> : [<Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&clubs;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&diams;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&hearts;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&spades;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1) + " NT"}</Dropdown.Item>][(Number(bid)-1)%5];
     }
     
+    function getSelectRoleButton(role){
+        return (
+            <DropdownButton 
+                disabled = {(props.players[role]!== null && props.players[role].type !== "AI" ? true:false)}
+                title={role + getPlayerName(role)} 
+                onSelect={(event) => {props.handleSelectRole(role,event)}}
+                id="dropdown-basic-button" 
+                variant={getVariantName(role)} 
+                className="m-2" 
+                size="sm"
+            >
+                <Dropdown.Item eventKey={"AI"}>AI</Dropdown.Item>
+                <Dropdown.Item eventKey={"Human"}>Me</Dropdown.Item>
+            </DropdownButton>
+        )
+    }
+
     return(
     <div className="boardContainer">
         <div className = "row1">
@@ -84,7 +113,7 @@ function Board(props) {
                 variant={"primary"}
                 title={"Spectator"}
                 className="m-1"
-                onClick = {(event) => props.handleSelectRole("Spectator",event)}
+                onClick = {(event) => props.handleSelectRole("Spectator","Human")}
             >
                 {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
             </SplitButton>
@@ -93,25 +122,25 @@ function Board(props) {
       
       <div className = "row2">
         <div className = "col1 mt-2 mb-2">
-            <button onClick = {(event) => props.handleSelectRole("North",event)} disabled = {(props.players["North"]!== null ? true:false)} className = {getClassName("North")}> {"North" + getPlayerName("North")}</button>
+            {getSelectRoleButton("North")}
             {getScoreboard("North")}
             {getCardPlayed("North")}
         </div>
         <div className = "col2 mt-2 mb-2">
             <div className="col2row1">
-                <button onClick = {(event) => props.handleSelectRole("West",event)} disabled = {(props.players["West"]!== null ? true:false)} className = {getClassName("West")}> {"West" + getPlayerName("West")}</button>
+                {getSelectRoleButton("West")}
                 {getScoreboard("West")}
                 <div>{getCardPlayed("West")}</div>
             </div>
             <div className="col2row2 m-5"></div>
             <div className="col2row3">
-                <button onClick = {(event) => props.handleSelectRole("East",event)} disabled = {(props.players["East"]!== null ? true:false)} className = {getClassName("East")}> {"East" + getPlayerName("East")}</button>
+                {getSelectRoleButton("East")}
                 {getScoreboard("East")}
                 {getCardPlayed("East")}
             </div>
         </div>
         <div className = "col3 mt-2 mb-2">
-            <button onClick = {(event) => props.handleSelectRole("South",event)} disabled = {(props.players["South"]!== null ? true:false)} className = {getClassName("South")}> {"South" + getPlayerName("South")}</button>
+            {getSelectRoleButton("South")}
             {getScoreboard("South")}
             {getCardPlayed("South")}
         </div>
