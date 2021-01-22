@@ -9,7 +9,6 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const pool = require('./db');
-const { RSA_PKCS1_PADDING } = require('constants');
 
 app.use(cors());
 app.use(express.json());
