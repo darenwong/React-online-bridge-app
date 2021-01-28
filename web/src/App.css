@@ -29,11 +29,6 @@
   background-color: light;
 }
 
-.onlineChatContainer {
-  display: flex;
-  height: 40vh;
-}
-
 .handContainer {
   display: flex;
   flex-direction: column;
@@ -68,4 +63,88 @@
   left: 0;
   z-index: -1;
   filter: brightness(100%);
+}
+
+.onlineChatContainer {
+  display: flex;
+  height: 50vh;
+  width: 50vw;
+  min-width: 200px;
+  max-width: 300px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: 200ms ease-in-out;
+  background-color: white;
+  border-radius: 10px;
+  border-color: tomato solid;
+}
+
+.onlineChatContainer.active {
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 100;
+}
+
+.chatToggleButton {
+  position: fixed;
+  height: 10vh;
+  width: 10vh;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10;
+  cursor: pointer;
+  background-color: rgb(231, 231, 231);
+  border: none;
+  border-radius: 10vh;
+  z-index: 101;
+}
+
+.chatIconClass {
+  width: 60%;
+  height: 60%;
+}
+
+.chatBadge {
+  display: flex;
+  position: absolute;
+  width: 40%;
+  height: 40%;
+  top: 0;
+  right: 0;
+  background-color: red;
+  border-radius: 100%;
+  color: white;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: absolute;
+  opacity: 0;
+  transition: 200ms ease-in-out;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 99;
+}
+
+.overlay.active {
+  position: absolute;
+  opacity: 1;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  z-index: 99;
+}
+
+*:focus {
+  outline: 0 !important;
 }

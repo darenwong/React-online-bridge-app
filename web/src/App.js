@@ -9,6 +9,7 @@ import SelectPartner from './components/selectPartner.jsx'
 import io from 'socket.io-client'
 import cardPlayVideo from './videos/cardsplay.mp4';
 import Login from './components/login.jsx';
+import { BsChatQuote } from 'react-icons/bs';
 
 const socket = io('http://localhost:4000');
 //const socket = io('https://floating-bridge-online.herokuapp.com/');
@@ -37,6 +38,8 @@ function App() {
   const [scoreboard, setScoreboard] = useState({"North":0,"East":0,"South":0,"West":0})
   const [winner, setWinner] = useState([]);
   const [disable, setDisable] = useState(false);
+
+  const [chatIsActive, setChatIsActive] = useState(false);
 
   useEffect(() => {
     console.log("initialised app")
@@ -220,10 +223,17 @@ function App() {
     return ((suite === "c" || suite === "s") ? temp + "btn-dark" : temp + "btn-danger");
   }
 
+  function getChatClassName(){
+    let temp = "onlineChatContainer";
+    if (chatIsActive === true) temp += " active";
+    return temp;
+  }
 
   if (isLoggedIn === true) {
     return (
+      
       <div className="App">
+        <div className={(chatIsActive)?"overlay active":"overlay"}>overlay</div>
         <Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
         
         <div className="mainContainer">
@@ -251,9 +261,10 @@ function App() {
                   </div> 
               }
           </div>
-          <div className = "onlineChatContainer">
+          <div className = {getChatClassName()}>
             <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
           </div>
+          <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive)}}><BsChatQuote className="chatIconClass"/><div className="chatBadge">1</div></button>
         </div>
         
         <Navbar bg="dark" variant="dark" className="navrow2">

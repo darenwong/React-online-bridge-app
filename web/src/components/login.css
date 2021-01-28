@@ -8,7 +8,8 @@
   transform: translate(-50%, -50%);
   justify-content: space-around;
   height: 50vh;
-  width: 300px;
+  width: 80%;
+  max-width: 300px;
   border-radius: 2vh;
   align-items: center;
   font-size: 5vh;
