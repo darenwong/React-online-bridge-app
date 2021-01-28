@@ -57,3 +57,12 @@
   border: 1px rgb(255, 255, 255) solid;
   flex-wrap: wrap;
 }
+
+.passBid {
+  background-color: seagreen;
+  border-radius: 1rem;
+}
+
+.nonPassBid {
+  border-radius: 1rem;
+}

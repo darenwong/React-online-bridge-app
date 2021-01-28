@@ -1,0 +1,181 @@
+.Home {
+  display: flex;
+  flex-direction: column;
+}
+
+.video {
+  object-fit: cover;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  filter: brightness(100%);
+}
+
+.topbarOuterContainer {
+  position: fixed;
+  width: 100%;
+  z-index: 1;
+}
+
+.topbarContainer {
+  display: flex;
+  flex-direction: row;
+  background-image: linear-gradient(
+    to bottom,
+    rgb(29, 29, 29, 1),
+    rgba(29, 29, 29, 0)
+  );
+  justify-content: space-evenly;
+}
+
+.topbtn {
+  font-size: 5vh;
+  font-weight: 500;
+  color: white;
+  background-color: transparent;
+  transition: 0.5s;
+  border: transparent;
+  outline: none;
+}
+
+.topbtn:focus {
+  outline: none;
+}
+
+.topbtn:hover {
+  font-size: 6vh;
+  color: rgba(0, 0, 0, 0.75);
+  background: rgba(255, 255, 255, 0.5);
+  padding: 2vh;
+  border-bottom-right-radius: 2vh;
+  border-bottom-left-radius: 2vh;
+  text-decoration: underline;
+  outline: none;
+}
+
+.topbtn:active {
+  border-color: transparent;
+  background-color: red;
+  color: white;
+  outline: none;
+}
+
+.titleContainer {
+  position: absolute;
+  background-color: transparent;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 10vh;
+}
+
+.playbtnContainer {
+  position: absolute;
+  top: 75%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.playbtn {
+  width: 20vh;
+  background-color: transparent;
+  font-size: 5vh;
+  font-weight: bold;
+  border-color: white;
+  border-width: 1vh;
+  border-radius: 2vh;
+  align-items: center;
+  justify-content: center;
+  padding: 1vh;
+  color: rgb(255, 255, 255);
+  transition: 1s;
+
+  animation-name: example;
+  animation-duration: 0.5s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in;
+}
+
+.playbtn:focus {
+  outline: none;
+}
+
+.playbtn:after {
+  content: "Play Now";
+}
+
+.playbtn:hover {
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 0, 0, 1);
+  border-color: red;
+  font-size: 5vh;
+}
+
+.playbtn:hover:after {
+  content: "Let's Go";
+}
+
+@keyframes example {
+  0%,
+  100% {
+    transform: translateY(0px);
+    transform: scaleY(0.96);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.textContainer {
+  background: rgba(0, 0, 0, 0.66);
+  color: white;
+  padding: 10vw;
+  font-size: 1.5rem;
+}
+
+.viewport-header {
+  position: relative;
+  height: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spacer {
+  height: 100vh;
+  width: 100%;
+  background-color: transparent;
+}
+
+.videoContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.botbarContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  height: 10vh;
+  background-color: rgb(52, 58, 63);
+  padding-right: 2rem;
+}
+
+.creditsText {
+  color: white;
+}
+
+.image {
+  position: absolute;
+  left: 2vw;
+  background-color: transparent;
+  background-size: cover;
+  width: 20vw;
+}

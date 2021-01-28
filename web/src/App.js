@@ -1,12 +1,15 @@
 import React, { useState, useEffect} from 'react'
 import { Navbar,Nav} from 'react-bootstrap'
-import io from 'socket.io-client'
 import './App.css';
 import Messages from './components/messages.jsx'
 import Toolbar from './components/toolbar.jsx'
 import Board from './components/board.jsx'
 import Bid from './components/bid.jsx'
 import SelectPartner from './components/selectPartner.jsx'
+import io from 'socket.io-client'
+import cardPlayVideo from './videos/cardsplay.mp4';
+import Login from './components/login.jsx';
+
 const socket = io('http://localhost:4000');
 //const socket = io('https://floating-bridge-online.herokuapp.com/');
 
@@ -14,7 +17,7 @@ function App() {
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
   const [usernames, setUsernames] = useState([]);
-  const [noClients, setNoClients] = useState(''); 
+  const [noClients, setNoClients] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [msg, setMsg] = useState('');
   const [chat, setChat] = useState([]);
@@ -26,6 +29,7 @@ function App() {
   const [spectators, setSpectators] = useState([]);
   const [bid, setBid] = useState(0);
   const [bidlog, setBidLog] = useState([]);
+  const [playerBids, setPlayerBids] = useState({"North":[],"South":[],"East":[],"West":[]});
   const [bidWinner, setBidWinner] = useState({"userID":null, "userRole":null, "winningBid":null, "trump": null, "partner": {"val":null,"role":null}});
   const [hand, setHand] = useState([]); 
 
@@ -35,15 +39,17 @@ function App() {
   const [disable, setDisable] = useState(false);
 
   useEffect(() => {
+    console.log("initialised app")
     socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
 
-    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, players, spectators, turnStatus, scoreboard, winner}) => {
-
+    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, players, spectators, turnStatus, scoreboard, winner}) => {
+      console.log('number clients B', clients, players)
       setBidWinner(bidWinner);
       setStatus(status);
       setTurn(turns);
       setBid(bid);
       setBidLog(bidlog);
+      setPlayerBids(playerBids);
       setPlayers(players);
       setSpectators(spectators);
       setTurnStatus(turnStatus);
@@ -74,6 +80,7 @@ function App() {
       setBidLog(bidlog);
       setTurn(turns);
     })
+    
   }, []);
 
   function handleSendMsg(event) {
@@ -81,9 +88,22 @@ function App() {
     setMsg('');
     event.preventDefault();
   }
-
+/*
   function handleSelectRole(role, event) {
     socket.emit('setRole', {role: role, user: name});
+  }
+*/
+  function handleSelectRole(role, event) {
+    switch(event) {
+      case "AI":
+        socket.emit('setRole', {role: role, user: "AI", type: event});
+        break
+      case "Human":
+        socket.emit('setRole', {role: role, user: name, type: event});
+        break
+      default:
+        console.log('Error: Unidentified role selection', role, event);
+    }
   }
 
   function handleStart(event) {
@@ -200,32 +220,30 @@ function App() {
     return ((suite === "c" || suite === "s") ? temp + "btn-dark" : temp + "btn-danger");
   }
 
-  return (
-    <div className="App">
-      <Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
-      
-      {isLoggedIn &&
+
+  if (isLoggedIn === true) {
+    return (
+      <div className="App">
+        <Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
+        
         <div className="mainContainer">
           <div className = "playContainer ">
             <div className="mt-2"></div>
-              <Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" &&
                 <div>
-                  <div className="spacer "></div>
                   <Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}></Bid>               
                 </div>
               }
-              {status === "selectPartner" && role != null && getBidWinnerTurn(turn, bidWinner.trump) === role &&
+              {status === "selectPartner" && role != null && getTurn(turn) === role &&
                 <div>
-                  <div className="spacer "></div>
                   <div className="ml-2">Your partner:</div>
                   <SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}></SelectPartner>
                 </div>
               }
               {hand.length > 0 && role !== "Spectator" && status !=="setup" &&
                   <div className="handContainer">
-                    <div className="spacer "></div>
                     <div className=" ml-2 ">Your hand:</div>
                     <div className="cardContainer">
                       {hand.map(({id,suite,val}) => <button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled = {disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role} key = {id} className = {getCardClass(suite)}>{getCardDisplay(suite, val)} </button>)}
@@ -233,21 +251,40 @@ function App() {
                   </div> 
               }
           </div>
-          <div className="spacer "></div>
           <div className = "onlineChatContainer">
             <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
           </div>
-         
         </div>
-      }   
-      
-      <Navbar bg="dark" variant="dark" className="navrow2">
-        {isLoggedIn && <Navbar.Text>{"Room ID: " + room}</Navbar.Text>}
-        <Nav className="mr-auto"></Nav>
-        <Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}</Navbar.Text>
-      </Navbar>
-    </div>
-  );
+        
+        <Navbar bg="dark" variant="dark" className="navrow2">
+          {isLoggedIn && <Navbar.Text>{"Room ID: " + room}</Navbar.Text>}
+          <Nav className="mr-auto"></Nav>
+          <Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}</Navbar.Text>
+        </Navbar>
+      </div>
+    )
+  }else{
+    return (
+      <div className="App">
+        <Toolbar className= "toolBarContainer" socket={socket}/>
+        
+        <video autoPlay muted loop className="video">
+          <source src={cardPlayVideo} />
+        </video>
+        
+        <Login usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
+
+        <div className="navrow2">
+          <Navbar bg="dark" variant="dark" style={{width:'100%'}}>
+            {isLoggedIn && <Navbar.Text>{"Room ID: " + room}</Navbar.Text>}
+            <Nav className="mr-auto"></Nav>
+            <Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}</Navbar.Text>
+          </Navbar>
+        </div>
+      </div>
+    );
+  }
+
 }
 
 export default App;

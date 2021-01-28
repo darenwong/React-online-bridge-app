@@ -1,6 +1,7 @@
 .App {
   display: flex;
   flex-direction: column;
+  background-color: white;
 }
 
 .toolBarContainer {
@@ -24,7 +25,7 @@
 .spacer {
   display: flex;
   flex-wrap: wrap;
-  height: 10vh;
+  height: 10px;
   background-color: light;
 }
 
@@ -53,4 +54,18 @@
 .navrow2 {
   display: flex;
   flex-wrap: wrap;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+.video {
+  object-fit: cover;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  filter: brightness(100%);
 }

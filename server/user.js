@@ -11,6 +11,7 @@ class User {
         this.name = name;
         this.room = room;
         this.role = role;
+        this.type = "Human"
     }
 }
 
