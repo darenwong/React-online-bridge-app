@@ -46,6 +46,16 @@ function Board(props) {
         return (<button className="btn btn-sm m-2 btn-info" disabled = {true}>{props.scoreboard[role]}</button>);
     }
 
+    function getBid(role){
+        function getBidClassName(bid){
+            return (bid==="pass") ? "passBid mt-2" : "nonPassBid mt-2";
+        }
+        function getBidString(bid){
+            return (bid === "pass") ? <button className={getBidClassName(bid)}>{"Pass"}</button> : [<button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&clubs;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&diams;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&hearts;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&spades;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1) + " NT"}</button>][(Number(bid)-1)%5];
+        }
+        return <div>{props.playerBids[role].map(bid=>getBidString(bid))}</div>;
+    }
+
     function getPlayerName(role){
         return (props.players[role] === null) ? '' : ': ' + props.players[role].name; 
     }
@@ -125,24 +135,28 @@ function Board(props) {
             {getSelectRoleButton("North")}
             {getScoreboard("North")}
             {getCardPlayed("North")}
+            {getBid("North")}
         </div>
         <div className = "col2 mt-2 mb-2">
             <div className="col2row1">
                 {getSelectRoleButton("West")}
                 {getScoreboard("West")}
                 <div>{getCardPlayed("West")}</div>
+                {getBid("West")}
             </div>
             <div className="col2row2 m-5"></div>
             <div className="col2row3">
                 {getSelectRoleButton("East")}
                 {getScoreboard("East")}
                 {getCardPlayed("East")}
+                {getBid("East")}
             </div>
         </div>
         <div className = "col3 mt-2 mb-2">
             {getSelectRoleButton("South")}
             {getScoreboard("South")}
             {getCardPlayed("South")}
+            {getBid("South")}
         </div>
 
         {props.status === "setup" &&

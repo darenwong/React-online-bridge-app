@@ -86,11 +86,13 @@ class AI {
     selectBid(roomState, selectedBid) {
         if (selectedBid !== "pass"){
             roomState.bid = selectedBid;
+            roomState.playerBids[this.role].push(selectedBid);
             roomState.bidlog.push({bid:selectedBid, userID:this.name, userRole:this.role});
             roomState.pass = 0;
             roomState.bidWinner.userID = this.name;
             roomState.bidWinner.userRole = this.role;
         }else{
+            roomState.playerBids[this.role].push('pass');
             roomState.bidlog.push({bid:"pass", userID:this.name, userRole:this.role});
             roomState.pass ++;
         }

@@ -9,6 +9,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const pool = require('./db');
+const Joi = require('joi');
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +23,67 @@ const io = require('socket.io')(http, {
 app.get("/", (req, res) => {
     res.send(users).status(200);
   });
+
+app.get("/search/:username", async (req,res)=>{
+  const schema = Joi.object({
+    username: Joi.string().min(2).max(10).required()
+  });
+
+  const result = schema.validate(req.params);
+
+  if (result.error) {
+    res.statusMessage = result.error.details[0].message;
+    res.status(400).end();
+    console.log('schema check search username', result.error.details[0].message);
+    return;
+  }
+
+  try {
+    const response = await pool.query(`SELECT COUNT(username) FROM userlogintable WHERE username = '${req.params.username}';`);
+    res.send(response.rows[0].count).status(200);
+    console.log('response search server', response.rows[0].count);
+  } catch (error) {
+    console.log('search error: ',error);
+  }
+})
+
+app.post("/adduser", async (req, res) => {
+  console.log('req',req.body);
+    
+  const schema = Joi.object({
+    name: Joi.string().min(2).max(10).required(),
+    password: Joi.string().min(2).max(10).required()
+  });
+
+  const result = schema.validate(req.body);
+
+  if (result.error) {
+    res.statusMessage = result.error.details[0].message;
+    res.status(400).end();
+    console.log('schema check result', result.error.details[0].message);
+    return;
+  }
+
+  const {name, password} = req.body;
+  try {
+    const newUser = await pool.query(`INSERT INTO userlogintable (username, password) VALUES ('${name}','${password}');`);
+    res.send(newUser);
+  } catch (error) {
+    console.log('Error insert into DB', error);
+  }
+});
+
+app.get("/login/:username/:password", async (req,res)=>{
+  try {
+    const response = await pool.query(`SELECT COUNT(username) FROM userlogintable WHERE username = '${req.params.username}' AND password = '${req.params.password}';`);
+    res.send(response.rows[0].count);
+    console.log('login response success', response.rows[0].count);
+  } catch(e) {
+    res.statusMessage = "bad login request";
+    res.status(400).end();
+    console.log(e, 'bad request');
+  }
+})
 /*
 app.post("/", async (req, res) => {
   console.log('req',req.body);
@@ -42,15 +104,20 @@ io.on('connection', socket => {
   // Creates a User Object. Initialise user room to main room, and user role to spectator
   let user = new User(socket.id, null, 'main', 'Spectator');
 
+  // User socket joins the main room
+  //socket.join(user.room);
+
   // Add user socket id to a global socket id list
   users.push(user);
   // Let user know he is not a spectator in the main room
   socket.emit('roleSetSuccessful', {role: user.role});
 
-  console.log('a user is connected');
+  console.log('a user is connected to room: ', user.room);
   
   // Increment number of users in main room by 1
   rooms[user.room].clients ++;
+  console.log("updated initial state");
+  io.to(user.room).emit('updateState', (rooms[user.room]));
   updateState(io, rooms, user.room, usernames);
 
 
@@ -254,6 +321,7 @@ io.on('connection', socket => {
 
     updateState(io, rooms, user.room, usernames);
     console.log('user is disconnected');
+    console.log('new state', rooms[user.room]);
   })
 
 })

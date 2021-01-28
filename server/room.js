@@ -39,6 +39,12 @@ class Room {
             "South":[],
             "West":[]
         }, 
+        this.playerBids ={
+            "North":[],
+            "East":[],
+            "South":[],
+            "West":[]
+        };
         this.players={
             "North":null,
             "East":null,
@@ -83,6 +89,12 @@ class Room {
             }
         };
         this.playerHands ={
+            "North":[],
+            "East":[],
+            "South":[],
+            "West":[]
+        };
+        this.playerBids ={
             "North":[],
             "East":[],
             "South":[],
@@ -148,12 +160,14 @@ class Room {
     setBid(selectedBid, userID, userRole){
         switch(selectedBid) {
             case "pass":
+                this.playerBids[userRole].push("pass");
                 this.bidlog.push({bid:"pass", userID:userID, userRole:userRole});
                 selectedBid = this.bid;
                 this.pass ++;
                 break
             default:
                 this.bid = selectedBid;
+                this.playerBids[userRole].push(this.bid);
                 this.bidlog.push({bid:this.bid, userID:userID, userRole:userRole});
                 this.pass = 0;
                 this.bidWinner.userID = userID;
