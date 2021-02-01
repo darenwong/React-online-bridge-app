@@ -71,8 +71,9 @@ class AI {
     getBid(roomState) {
         // TO DO: ADD AI ALGO 
         //Sample
-        if (roomState.bid <2){
-            return roomState.bid +1;
+        if (Number(roomState.bid) <10){
+            console.log(roomState.bid)
+            return Number(roomState.bid) +1;
         }else{
             return "pass";
         }
@@ -212,25 +213,30 @@ class AI {
         if (roomState.turnStatus.board.length >= 4){
             // Disable all cards to prevent players from further playing any cards until next round starts
             roomState.disable = true;
-            io.to(userRoom).emit('updateState', (roomState));
-
-            // All the following updates will only take effect after timeout
-            // Get winner of the round
-            let winner = roomState.getWinner();
-            console.log('winner', winner);
-            // Set winner position to start the next round
-            roomState.turns = ["North", "East", "South", "West"].indexOf(winner.user);
-            // Add winner score by 1
-            roomState.scoreboard[winner.user] ++;
-            // Reset board state to empty
-            roomState.turnStatus.board = [];
-            // Reset starting card to null
-            roomState.turnStatus.start = null;
-            // Set disable back to false
-            roomState.disable = false;
-
+            
             setTimeout(()=>{
-                callbackFunction();
+                // Get winner of the round
+                let winner = roomState.getWinner();
+                console.log('winner', winner);
+                roomState.turns = null;
+                io.to(userRoom).emit('updateState', (roomState));
+
+                // All the following updates will only take effect after timeout
+                // Set winner position to start the next round
+                roomState.turns = ["North", "East", "South", "West"].indexOf(winner.user);
+                // Add winner score by 1
+                roomState.scoreboard[winner.user] ++;
+                // Reset board state to empty
+                roomState.turnStatus.board = [];
+                // Reset starting card to null
+                roomState.turnStatus.start = null;
+                // Set disable back to false
+                roomState.disable = false;
+
+                setTimeout(()=>{
+                    callbackFunction();
+                }, 3000);
+            
             }, 1000);
         }
         else {

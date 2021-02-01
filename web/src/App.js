@@ -10,6 +10,7 @@ import io from 'socket.io-client'
 import cardPlayVideo from './videos/cardsplay.mp4';
 import Login from './components/login.jsx';
 import { BsChatQuote } from 'react-icons/bs';
+import imgDict from './importSVG';
 
 const socket = io('http://localhost:4000');
 //const socket = io('https://floating-bridge-online.herokuapp.com/');
@@ -32,6 +33,7 @@ function App() {
   const [bidlog, setBidLog] = useState([]);
   const [playerBids, setPlayerBids] = useState({"North":[],"South":[],"East":[],"West":[]});
   const [bidWinner, setBidWinner] = useState({"userID":null, "userRole":null, "winningBid":null, "trump": null, "partner": {"val":null,"role":null}});
+  const [roundWinner, setRoundWinner] = useState(null);
   const [hand, setHand] = useState([]); 
 
   const [turnStatus, setTurnStatus] =  useState({start: null, board:[], trumpBroken:false})
@@ -41,13 +43,15 @@ function App() {
 
   const [chatIsActive, setChatIsActive] = useState(false);
 
+
   useEffect(() => {
     console.log("initialised app")
     socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
 
-    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, players, spectators, turnStatus, scoreboard, winner}) => {
+    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, roundWinner, players, spectators, turnStatus, scoreboard, winner}) => {
       console.log('number clients B', clients, players)
       setBidWinner(bidWinner);
+      setRoundWinner(roundWinner)
       setStatus(status);
       setTurn(turns);
       setBid(bid);
@@ -202,7 +206,7 @@ function App() {
   }
 
   function getTurn(turn) {
-    return ["North", "East", "South", "West"][turn%4];
+    return (turn !== null) ? ["North", "East", "South", "West"][turn%4] : null;
   }
 
   function getBidWinnerTurn(turn, trump) {
@@ -214,13 +218,29 @@ function App() {
   }
 
   function getCardDisplay(suite, val) {
-    let symbol = {"c": <div>&clubs;{getCardVal(val-2)}</div>, "d": <div>&diams;{getCardVal(val-2)}</div>, "h": <div>&hearts;{getCardVal(val-2)}</div>, "s": <div>&spades;{getCardVal(val-2)}</div>};
+    let symbol = {"c": <div className={getCardClass(suite)}>{getCardVal(val-2)}&clubs;</div>, "d": <div className={getCardClass(suite)}>{getCardVal(val-2)}&diams;</div>, "h": <div className={getCardClass(suite)}>{getCardVal(val-2)}&hearts;</div>, "s": <div className={getCardClass(suite)}>{getCardVal(val-2)}&spades;</div>};
     return symbol[suite];
   }
 
-  function getCardClass(suite){
+/*  function getCardClass(suite){
     let temp = "btn btn-sm m-2 ";
     return ((suite === "c" || suite === "s") ? temp + "btn-dark" : temp + "btn-danger");
+  }*/
+
+  function getCardClass(suite){
+    return ((suite === "c" || suite === "s") ? "bid center" : "bid red center");
+  }
+
+  function getCardClassTest(suite){
+    return "cardTest";
+  }
+
+  function getCardDisableStatus(id,suite,val){
+    return disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role;
+  }
+
+  function getSVGClassName(id,suite,val){
+    return (getCardDisableStatus(id,suite,val)) ? "svgClass disable" : "svgClass";
   }
 
   function getChatClassName(){
@@ -234,25 +254,36 @@ function App() {
       
       <div className="App">
         <div className={(chatIsActive)?"overlay active":"overlay"}>overlay</div>
-        <Toolbar className= "toolBarContainer" usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
         
         <div className="mainContainer">
           <div className = "playContainer ">
             <div className="mt-2"></div>
-              <Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board status={status} socket={socket} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
-              {status === "bid" && role !== null && role !== "Spectator" &&
-                <div>
+              {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
+                <div className="bidOuterContainer">
+                  <div className = " ml-2 ">Waiting for {getTurn(turn)} to bid</div>
+                </div>
+              }
+              {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) === role &&
+                <div className="bidOuterContainer">
+                  <div className = " ml-2 ">Your turn: select your bid</div>
                   <Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}></Bid>               
                 </div>
               }
+
+              {status === "selectPartner" && role != null && getTurn(turn) !== role &&
+                <div className="selectPartnerOuterContainer">
+                  <div className="ml-2">Waiting for {getTurn(turn)} to select partner</div>
+                </div>
+              }
               {status === "selectPartner" && role != null && getTurn(turn) === role &&
-                <div>
-                  <div className="ml-2">Your partner:</div>
+                <div className="selectPartnerOuterContainer">
+                  <div className="ml-2">Your turn: select your partner</div>
                   <SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}></SelectPartner>
                 </div>
               }
-              {hand.length > 0 && role !== "Spectator" && status !=="setup" &&
+              {hand.length > 0 && role !== "Spectator" && status !=="setup" && false &&
                   <div className="handContainer">
                     <div className=" ml-2 ">Your hand:</div>
                     <div className="cardContainer">
@@ -266,12 +297,11 @@ function App() {
           </div>
           <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive)}}><BsChatQuote className="chatIconClass"/><div className="chatBadge">1</div></button>
         </div>
-        
-        <Navbar bg="dark" variant="dark" className="navrow2">
-          {isLoggedIn && <Navbar.Text>{"Room ID: " + room}</Navbar.Text>}
-          <Nav className="mr-auto"></Nav>
-          <Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}</Navbar.Text>
-        </Navbar>
+        {status !== "setup" &&
+          <div className="handContainer">
+            {hand.map(({id,suite,val}) => <button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled={getCardDisableStatus(id,suite,val)} key = {id} className = {getCardClassTest(suite)}><img className={getSVGClassName(id,suite,val)} src={imgDict[suite][val-2]} alt="Logo" /></button>)}
+          </div>
+        }
       </div>
     )
   }else{

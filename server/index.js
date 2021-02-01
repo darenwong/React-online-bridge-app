@@ -69,7 +69,7 @@ app.post("/adduser", async (req, res) => {
     const newUser = await pool.query(`INSERT INTO userlogintable (username, password) VALUES ('${name}','${password}');`);
     res.send(newUser);
   } catch (error) {
-    console.log('Error insert into DB', error);
+    console.log('Error cannot insert into DB', error);
   }
 });
 
@@ -247,12 +247,13 @@ io.on('connection', socket => {
     if (rooms[user.room].turnStatus.board.length >= 4){
         // Disable all cards to prevent players from further playing any cards until next round starts
         rooms[user.room].disable = true;
-        updateState(io, rooms, user.room, usernames);
-        
-        // All the following updates will only take effect after timeout
         // Get winner of the round
         let winner = rooms[user.room].getWinner();
         console.log('winner', winner);
+        rooms[user.room].turns = null;
+        updateState(io, rooms, user.room, usernames);
+        
+        // All the following updates will only take effect after timeout
         // Set winner position to start the next round
         rooms[user.room].turns = ["North", "East", "South", "West"].indexOf(winner.user);
         // Add winner score by 1
@@ -368,7 +369,7 @@ function updateState(io, rooms, userRoom, usernames) {
       currentTurnPlayer.getAction(rooms[userRoom], io, userRoom, 
         callbackUpdate = (newState)=>{
           rooms[userRoom] = newState;
-          setTimeout(()=>updateState(io, rooms, userRoom, usernames), 100);
+          setTimeout(()=>updateState(io, rooms, userRoom, usernames), 1000);
         });
     }
   }

@@ -64,6 +64,7 @@ class Room {
             "South":0,
             "West":0
         }, 
+        this.roundWinner=null,
         this.winner=[],
         this.finalScore=0
     }
@@ -110,6 +111,7 @@ class Room {
             "East":0,
             "South":0,
             "West":0};
+        this.roundWinner=null;
         this.winner = [];
         this.finalScore = 0;
     }
@@ -263,6 +265,7 @@ class Room {
                 }
             }
         })
+        this.roundWinner = winner
         return winner;
     }
 

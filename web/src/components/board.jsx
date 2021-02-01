@@ -1,11 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import SplitButton from 'react-bootstrap/SplitButton';
 import { Button} from 'react-bootstrap'
 import DropdownButton from 'react-bootstrap/DropdownButton'
 import Dropdown from 'react-bootstrap/Dropdown';
 import './board.css';
+import imgDict from '../importSVG';
+import {useTransition, animated} from 'react-spring';
+import { FaRegHandshake } from "react-icons/fa";
+import { AiOutlineFileDone } from "react-icons/ai";
 
 function Board(props) {
+    const [boardPlaceholder, setBoardPlaceholder] = useState([]);
+    const [show, setShow] = useState(true);
+    /*const [transitions, setTransitions] = useState(useTransition(show, null, {
+        from: { opacity: 0, transform: "translateY(-40px)" },
+        enter: { opacity: 1, transform: "translateY(0px)" },
+        leave: { opacity: 0, transform: "translateY(-40px)" },
+    }));*/
+    const [direction, setDirection] = useState("translate(0%, 0%)");
+
+    const transitions = useTransition(show, null, {
+        from: { opacity: 0, transform: "translate(-50%, -50%)" },
+        enter: { opacity: 1, transform: "translate(-50%, -50%)" },
+        leave: { opacity: 0, transform: direction },
+    });
+
+
+/*    const transitions = useTransition(show, null, {
+        from: { opacity:1},
+        enter: { opacity:1 },
+        leave: { transform: 'translate3d(0,-80px,0)', opacity:1 },
+    })*/
+
+    useEffect(()=>{
+        if (props.turnStatus.board.length > 0){
+            setBoardPlaceholder(props.turnStatus.board);    
+        }
+        if (props.turnStatus.board.length >3){
+            switch(props.roundWinner.user){
+                case "North":
+                    setDirection("translate(-50%, -100%)");
+                    break;
+                case "South":
+                    setDirection("translate(-50%, 50%)");
+                    break;
+                case "East":
+                    setDirection("translate(50%, -50%)");
+                    break;
+                case "West":
+                    setDirection("translate(-100%, -50%)");
+                    break;
+                default:
+                    console.log("Error: Unknown winner")
+            };
+            console.log('transitions', transitions);
+            setTimeout(()=>{
+                setShow(false);
+                setTimeout(()=>{
+                    setBoardPlaceholder([]);
+                    setShow(true);
+                },
+                300);
+            }, 2000);
+        }
+    },[props.turnStatus.board])
+
     function getClassName(role){
         let temp = "btn btn-sm m-2 ";
         if (props.status === "setup"){
@@ -32,28 +91,63 @@ function Board(props) {
     };
 
     function getCardPlayed(role){
-        for (let i = 0; i < props.turnStatus.board.length; i++) {
-            if (props.turnStatus.board[i].user === role){
-                let suite = props.turnStatus.board[i].suite;
-                let val = props.turnStatus.board[i].val;
-                return <button className = {props.getCardClass(suite)} disabled ={true}>{props.getCardDisplay(suite, val)}</button>
-            }
+        for (let i = 0; i < boardPlaceholder.length; i++) {
+            if (boardPlaceholder[i].user === role){
+                let suite = boardPlaceholder[i].suite;
+                let val = boardPlaceholder[i].val;
+                return <img className={"boardCardClass "+role} src={imgDict[suite][val-2]} alt="Card" />;            }
         }
-        return <div></div>;
+        return <div/>;
     };
 
     function getScoreboard(role){
-        return (<button className="btn btn-sm m-2 btn-info" disabled = {true}>{props.scoreboard[role]}</button>);
+        return (<button className="scoreboard">{props.scoreboard[role]}</button>);
+    }
+
+    function getBidClassName(bid, index, role){
+        let lastBid = (index === props.playerBids[role].length-1) ? "center" : "";
+
+        if (bid === "pass"){
+            return "bid green "+lastBid;
+        }
+        else if (bid%5 === 2 || bid%5===3){
+            return "bid red "+lastBid;
+        }
+        else{ return "bid "+lastBid};
+    }
+    
+    function getBidString(bid, index, role){
+        return (bid === "pass") ? <div key={index} className={getBidClassName(bid,index,role)}>{"Pass"}</div> : [<div className={getBidClassName(bid,index,role)}>{(Math.floor((Number(bid)-1)/5)+1)}&clubs;</div>, <div className={getBidClassName(bid,index,role)}>{(Math.floor((Number(bid)-1)/5)+1)}&diams;</div>, <div className={getBidClassName(bid,index,role)}>{(Math.floor((Number(bid)-1)/5)+1)}&hearts;</div>, <div className={getBidClassName(bid,index,role)}>{(Math.floor((Number(bid)-1)/5)+1)}&spades;</div>, <div className={getBidClassName(bid,index,role)}>{(Math.floor((Number(bid)-1)/5)+1) + "NT"}</div>][(Number(bid)-1)%5];
     }
 
     function getBid(role){
-        function getBidClassName(bid){
-            return (bid==="pass") ? "passBid mt-2" : "nonPassBid mt-2";
+        if (props.status === "bid") return( 
+            <div className="bidBoardContainer">
+                {props.playerBids[role].map((bid, index)=>getBidString(bid, index, role))}
+            </div>
+        );
+    }
+
+    function getContract(role){
+        if (role===props.bidWinner.userRole && props.bidWinner.winningBid !== null){
+            return (
+                <div className="playerStatContainer">
+                    <AiOutlineFileDone style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
+                    {getBidString(props.playerBids[role][props.playerBids[role].length-1], props.playerBids[role].length-1, role)}
+                </div>
+            )
         }
-        function getBidString(bid){
-            return (bid === "pass") ? <button className={getBidClassName(bid)}>{"Pass"}</button> : [<button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&clubs;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&diams;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&hearts;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1)}&spades;</button>, <button className={getBidClassName(bid)}>{(Math.floor((Number(bid)-1)/5)+1) + " NT"}</button>][(Number(bid)-1)%5];
+    }
+
+    function getPartnerCard(role){
+        if (role===props.bidWinner.userRole && props.bidWinner.partner.suite !== null){
+            return(
+                <div className="playerStatContainer">
+                    <FaRegHandshake style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
+                    {props.getCardDisplay(props.bidWinner.partner.suite, props.bidWinner.partner.val+2)}
+                </div>
+            )
         }
-        return <div>{props.playerBids[role].map(bid=>getBidString(bid))}</div>;
     }
 
     function getPlayerName(role){
@@ -93,19 +187,24 @@ function Board(props) {
                 onSelect={(event) => {props.handleSelectRole(role,event)}}
                 id="dropdown-basic-button" 
                 variant={getVariantName(role)} 
-                className="m-2" 
-                size="sm"
+                className="roleButton" 
+                drop={'right'}
             >
-                <Dropdown.Item eventKey={"AI"}>AI</Dropdown.Item>
-                <Dropdown.Item eventKey={"Human"}>Me</Dropdown.Item>
+                <Dropdown.Item className="roleButton" eventKey={"AI"}>AI</Dropdown.Item>
+                <Dropdown.Item className="roleButton" eventKey={"Human"}>Me</Dropdown.Item>
             </DropdownButton>
         )
     }
 
+    function getStartGameStatus(){
+        let numberOfEmptySeats = 4-props.getNumberPlayers();
+        return (numberOfEmptySeats === 1) ? `Waiting for 1 more player to start...` : `Waiting for ${numberOfEmptySeats} more players to start...`;
+    }
+
+
     return(
     <div className="boardContainer">
         <div className = "row1">
-            <div className ="row1col1 ml-2 ">Board:</div>
             <div className="row1col2 mr-auto"></div>
             <DropdownButton id="dropdown-basic-button" variant={"primary"} className="m-1 bidlog" title="Bid Log" size="sm">
                 {props.bidlog.map(({bid, userRole}, index) => getBidMsg(bid, userRole, index))}
@@ -127,58 +226,101 @@ function Board(props) {
             >
                 {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
             </SplitButton>
+            <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Restart</Button>
             </div>
         </div>
       
-      <div className = "row2">
-        <div className = "col1 mt-2 mb-2">
-            {getSelectRoleButton("North")}
-            {getScoreboard("North")}
-            {getCardPlayed("North")}
+      <div className = "board">
+        <div className = "board north">
+            <div className = "board stat">
+                {getContract("North")}
+                {getPartnerCard("North")}
+            </div>
+            <div className = "board top">
+                {getSelectRoleButton("North")}
+                {getScoreboard("North")}
+            </div>
             {getBid("North")}
         </div>
-        <div className = "col2 mt-2 mb-2">
-            <div className="col2row1">
+        <div className="board west">
+            <div className = "board stat">
+                {getContract("West")}
+                {getPartnerCard("West")}
+            </div>
+            <div className = "board top">
                 {getSelectRoleButton("West")}
                 {getScoreboard("West")}
-                <div>{getCardPlayed("West")}</div>
-                {getBid("West")}
             </div>
-            <div className="col2row2 m-5"></div>
-            <div className="col2row3">
+            {getBid("West")}
+        </div>
+        <div className="board east">
+            <div className = "board stat">
+                {getContract("East")}
+                {getPartnerCard("East")}
+            </div>
+            <div className = "board top">
                 {getSelectRoleButton("East")}
                 {getScoreboard("East")}
-                {getCardPlayed("East")}
-                {getBid("East")}
             </div>
+            {getBid("East")}
         </div>
-        <div className = "col3 mt-2 mb-2">
-            {getSelectRoleButton("South")}
-            {getScoreboard("South")}
-            {getCardPlayed("South")}
+        <div className = "board south">
+            <div className = "board stat">
+                {getContract("South")}
+                {getPartnerCard("South")}
+            </div>
+            <div className = "board top">
+                {getSelectRoleButton("South")}
+                {getScoreboard("South")}
+            </div>
             {getBid("South")}
         </div>
 
-        {props.status === "setup" &&
-          <div className = "col4">
-            <button disabled={props.getNumberPlayers() < 4} onClick = {(event) => props.handleStart(event)} className = "btn btn-danger btn-m m-3"> Start </button>
+        {transitions.map(({ item, key, props }) => item&&
+            <animated.div key={key} style={props} className="boardCard container">
+                <div className="boardCard north">{getCardPlayed("North")}</div>
+                <div className="boardCard west">{getCardPlayed("West")}</div>
+                <div className="boardCard south">{getCardPlayed("South")}</div>
+                <div className="boardCard east">{getCardPlayed("East")}</div>
+            </animated.div>
+        )}
+
+
+        {props.status === "setup" && props.getNumberPlayers() < 4 &&
+          <div className = "startButtonContainer">
+            <div>{getStartGameStatus()}</div>
           </div>
         }
+        {props.status === "setup" && props.getNumberPlayers() === 4 &&
+          <div className = "startButtonContainer">
+            <button disabled={props.getNumberPlayers() < 4} onClick = {(event) => props.handleStart(event)} className = "startButton btn btn-danger btn-m m-3"> Start </button>
+          </div>
+        }
+
         {props.status === "gameOver" &&
-            <div className = "col5">    
-                <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart')}} variant="danger" className = "mr-sm-2">{props.winner[0] + " & " + props.winner[1] + " won"}</Button>
+            <div className = "gameOverOuterContainer">
+                <div>{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
+                <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
             </div>
         }
         {props.status === "allPass" &&
-            <div className = "col5">    
-                <div className="spacer"></div>
-                <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart')}} variant="danger" className = "mr-sm-2">{"All passed, click restart"}</Button>
+            <div className = "gameOverOuterContainer">    
+                <div>{"Game ended, all players passed"}</div>
+                <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
             </div>
         }
       </div>
 
-    
     </div>
+    );
+    return(
+        
+        <div className="boardCard container"> 
+            <div className="boardCard north">{<img className="boardCardClass" src={imgDict['c'][0]} alt="Card" />}</div>
+            <div className="boardCard west">{<img className="boardCardClass" src={imgDict['c'][1]} alt="Card" />}</div>
+            <div className="boardCard south">{<img className="boardCardClass" src={imgDict['c'][2]} alt="Card" />}</div>
+            <div className="boardCard east">{<img className="boardCardClass" src={imgDict['c'][3]} alt="Card" />}</div>
+        </div>
     );
 }
 export default Board;
