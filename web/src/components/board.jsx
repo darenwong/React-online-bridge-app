@@ -95,7 +95,8 @@ function Board(props) {
             if (boardPlaceholder[i].user === role){
                 let suite = boardPlaceholder[i].suite;
                 let val = boardPlaceholder[i].val;
-                return <img className={"boardCardClass "+role} src={imgDict[suite][val-2]} alt="Card" />;            }
+                return <div className={"boardCard "+role} style={{zIndex:i+10}}><img className={"boardCardClass "+role} src={imgDict[suite][val-2]} alt="Card" /></div>;            
+            }
         }
         return <div/>;
     };
@@ -278,10 +279,10 @@ function Board(props) {
 
         {transitions.map(({ item, key, props }) => item&&
             <animated.div key={key} style={props} className="boardCard container">
-                <div className="boardCard north">{getCardPlayed("North")}</div>
-                <div className="boardCard west">{getCardPlayed("West")}</div>
-                <div className="boardCard south">{getCardPlayed("South")}</div>
-                <div className="boardCard east">{getCardPlayed("East")}</div>
+                {getCardPlayed("North")}
+                {getCardPlayed("West")}
+                {getCardPlayed("South")}
+                {getCardPlayed("East")}
             </animated.div>
         )}
 
