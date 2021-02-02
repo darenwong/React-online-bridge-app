@@ -92,10 +92,15 @@
   bottom: 10px;
   z-index: 10;
   cursor: pointer;
-  background-color: rgb(231, 231, 231);
+  background-color: white;
+  box-shadow: 5px 10px 18px black;
   border: none;
   border-radius: 10vh;
   z-index: 101;
+}
+
+.chatToggleButton:hover {
+  background-color: lightgray;
 }
 
 .chatIconClass {
@@ -115,6 +120,23 @@
   color: white;
   align-items: center;
   justify-content: center;
+  animation: chatBadgeAnim 1.2s ease-in-out forwards;
+  animation-iteration-count: infinite;
+}
+
+@keyframes chatBadgeAnim {
+  0% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(0%, -20%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.5;
+  }
 }
 
 .overlay {
@@ -176,6 +198,10 @@
   width: 8vw;
   margin-left: -4vw;
   transition: 0.2s ease-in;
+}
+
+.cardTest:hover ~ .cardTest {
+  transform: translateX(20%);
 }
 
 .svgClass {

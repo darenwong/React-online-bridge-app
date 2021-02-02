@@ -14,6 +14,7 @@ import imgDict from './importSVG';
 
 const socket = io('http://localhost:4000');
 //const socket = io('https://floating-bridge-online.herokuapp.com/');
+let chatIsActiveGlobal = false;
 
 function App() {
   const [name, setName] = useState('');
@@ -36,8 +37,8 @@ function App() {
   const [roundWinner, setRoundWinner] = useState(null);
   const [hand, setHand] = useState([]); 
 
-  const [turnStatus, setTurnStatus] =  useState({start: null, board:[], trumpBroken:false})
-  const [scoreboard, setScoreboard] = useState({"North":0,"East":0,"South":0,"West":0})
+  const [turnStatus, setTurnStatus] =  useState({start: null, board:[], trumpBroken:false});
+  const [scoreboard, setScoreboard] = useState({"North":0,"East":0,"South":0,"West":0});
   const [winner, setWinner] = useState([]);
   const [disable, setDisable] = useState(false);
 
@@ -74,8 +75,10 @@ function App() {
       setHand(hand);
     })
 
-    socket.on('receivedMsg', (data) => {
-      setChat(chat => [...chat,data]);
+    socket.on('receivedMsg', (message) => {
+      (chatIsActiveGlobal===true) ?message.read = true: message.read = false;
+      console.log('msg received', chatIsActiveGlobal, message);
+      setChat(chat => [...chat,message]);
     })
 
     socket.on('roleSetSuccessful', (data) => {
@@ -90,6 +93,17 @@ function App() {
     
   }, []);
 
+  useEffect(()=>{
+    if (chatIsActive === true) {
+      let chatDeepCopy = JSON.parse(JSON.stringify(chat));
+      console.log("chat active", chatIsActive)
+      for (let i=0; i<chatDeepCopy.length; i++){
+        chatDeepCopy[i].read = true;
+      }
+      setChat(chatDeepCopy);
+    }
+  }, [chatIsActive])
+
   function handleSendMsg(event) {
     socket.emit('sendMsg', {message: msg, username: name});
     setMsg('');
@@ -100,6 +114,12 @@ function App() {
     socket.emit('setRole', {role: role, user: name});
   }
 */
+
+  const getChatIsActive = () => {
+    console.log('chatIsActive', chatIsActive, chat);
+    return chatIsActive
+  };
+
   function handleSelectRole(role, event) {
     switch(event) {
       case "AI":
@@ -249,6 +269,16 @@ function App() {
     return temp;
   }
 
+  function getNotificationNumber(){
+    let count = 0;
+    for (let i=0; i<chat.length; i++){
+      if (chat[i].read === false){
+        count += 1;
+      }
+    }
+    return count;
+  }
+
   if (isLoggedIn === true) {
     return (
       
@@ -295,7 +325,12 @@ function App() {
           <div className = {getChatClassName()}>
             <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
           </div>
-          <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive)}}><BsChatQuote className="chatIconClass"/><div className="chatBadge">1</div></button>
+          <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive); chatIsActiveGlobal=!chatIsActiveGlobal}}>
+            <BsChatQuote className="chatIconClass"/>
+            {getNotificationNumber() > 0 &&
+              <div className="chatBadge">{getNotificationNumber()}</div>
+            }
+          </button>
         </div>
         {status !== "setup" &&
           <div className="handContainer">
