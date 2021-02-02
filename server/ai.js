@@ -124,8 +124,8 @@ class AI {
             // For each player, search through all 13 cards in hand
             for (let i = 0; i < 13; i++){
                 if (Number(roomState.playerHands[player][i].id) === Number(card.id)){
-                    roomState.bidWinner.partner.suite = card.suite;
-                    roomState.bidWinner.partner.val = card.val-2;
+                    roomState.bidWinner.partner.card = card;
+                    //roomState.bidWinner.partner.val = card.val-2;
                     roomState.bidWinner.partner.role = player;
                     roomState.status = "play";
                     console.log("AI partner is ", player, card.suite, card.val, roomState.bidWinner.partner);
@@ -205,7 +205,11 @@ class AI {
     
         // Add card to board
         roomState.turnStatus.board.push({user: this.role, id:card.id,suite:card.suite,val:card.val});
-    
+        if (roomState.bidWinner.partner.card.id === card.id){
+            console.log("partner revealed")
+            roomState.partnerRevealed = true;
+            roomState.partner = this.role;
+          }
         // Move Card Object from player hand to board
         roomState.updatePlayerHand(this.role, card.id);
     

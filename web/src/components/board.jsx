@@ -7,7 +7,8 @@ import './board.css';
 import imgDict from '../importSVG';
 import {useTransition, animated} from 'react-spring';
 import { FaRegHandshake } from "react-icons/fa";
-import { AiOutlineFileDone } from "react-icons/ai";
+import { AiFillUnlock } from "react-icons/ai";
+import { IoDocumentLock } from "react-icons/io5";
 
 function Board(props) {
     const [boardPlaceholder, setBoardPlaceholder] = useState([]);
@@ -65,19 +66,6 @@ function Board(props) {
         }
     },[props.turnStatus.board])
 
-    function getClassName(role){
-        let temp = "btn btn-sm m-2 ";
-        if (props.status === "setup"){
-            return temp + "btn-primary"
-        }
-        else if (props.turn === role){
-            return temp + "btn-warning"
-        }
-        else {
-            return temp + "btn-secondary"
-        }
-    };
-
     function getVariantName(role){
         if (props.status === "setup"){
             return "primary"
@@ -131,49 +119,46 @@ function Board(props) {
 
     function getContract(role){
         if (role===props.bidWinner.userRole && props.bidWinner.winningBid !== null){
-            return (
-                <div className="playerStatContainer">
-                    <AiOutlineFileDone style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
-                    {getBidString(props.playerBids[role][props.playerBids[role].length-1], props.playerBids[role].length-1, role)}
-                </div>
-            )
+            if (props.turnStatus.trumpBroken === false){
+                return (
+                    <div className="playerStatContainer">
+                        <IoDocumentLock style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
+                        {getBidString(props.playerBids[role][props.playerBids[role].length-1], props.playerBids[role].length-1, role)}
+                    </div>
+                )
+            } else{
+                return(
+                    <div className="playerStatContainer red">
+                        <AiFillUnlock style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
+                        {getBidString(props.playerBids[role][props.playerBids[role].length-1], props.playerBids[role].length-1, role)}
+                    </div>
+                )
+            }
         }
     }
 
     function getPartnerCard(role){
-        if (role===props.bidWinner.userRole && props.bidWinner.partner.suite !== null){
-            return(
-                <div className="playerStatContainer">
-                    <FaRegHandshake style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
-                    {props.getCardDisplay(props.bidWinner.partner.suite, props.bidWinner.partner.val+2)}
-                </div>
-            )
+        if (role===props.bidWinner.userRole && props.bidWinner.partner.card !== null){
+            if (props.partnerRevealed === true && props.partner !== null){
+                return (
+                    <div className="playerStatContainer red">
+                        <FaRegHandshake style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
+                        <div className="bid center">{props.partner}</div>
+                    </div>
+                )
+            } else{
+                return(
+                    <div className="playerStatContainer">
+                        <FaRegHandshake style={{zIndex:1000, marginRight:"25px", fontSize:"2rem"}}/>
+                        {props.getCardDisplay(props.bidWinner.partner.card.suite, props.bidWinner.partner.card.val)}
+                    </div>
+                )
+            }
         }
     }
 
     function getPlayerName(role){
         return (props.players[role] === null) ? '' : ': ' + props.players[role].name; 
-    }
-
-    function getDeclarer(){
-        return (props.bidWinner.userRole === null) ? <Dropdown.Item disabled="true">Declarer: </Dropdown.Item> : <Dropdown.Item disabled="true">{"Declarer: "+props.bidWinner.userRole}</Dropdown.Item>;
-    }
-
-    function getCardVal(val) {
-        return ["2","3","4","5","6","7","8","9","10","J","Q","K","A"][val];
-      }
-
-    function getPartner(){
-        let cardVal = getCardVal(props.bidWinner.partner.val);
-        return (props.bidWinner.partner.suite === null || props.bidWinner.partner.val === null) ? <Dropdown.Item disabled="true">Partner: </Dropdown.Item> : {c:<Dropdown.Item disabled="true">Partner: &clubs;{cardVal}</Dropdown.Item>, d:<Dropdown.Item disabled="true">Partner: &diams;{cardVal}</Dropdown.Item>, h:<Dropdown.Item disabled="true">Partner: &hearts;{cardVal}</Dropdown.Item>, s:<Dropdown.Item disabled="true">Partner: &spades;{cardVal}</Dropdown.Item>}[props.bidWinner.partner.suite];
-    }
-
-    function getTrump(){
-        return (props.bidWinner.trump === null) ? <Dropdown.Item disabled="true">Trump: </Dropdown.Item> : [<Dropdown.Item disabled="true">Trump: &clubs;</Dropdown.Item>, <Dropdown.Item disabled="true">Trump: &diams;</Dropdown.Item>, <Dropdown.Item disabled="true">Trump: &hearts;</Dropdown.Item>, <Dropdown.Item disabled="true">Trump: &spades;</Dropdown.Item>, <Dropdown.Item disabled="true">Trump: NT</Dropdown.Item>][props.bidWinner.trump];;
-    }
-
-    function getWonBid(){
-        return (props.bidWinner.winningBid === null) ? <Dropdown.Item disabled="true">Contract: </Dropdown.Item> : <Dropdown.Item disabled="true">{"Contract: "+props.bidWinner.winningBid}</Dropdown.Item>;
     }
 
     function getBidMsg(bid, userRole,index){
@@ -209,12 +194,6 @@ function Board(props) {
             <div className="row1col2 mr-auto"></div>
             <DropdownButton id="dropdown-basic-button" variant={"primary"} className="m-1 bidlog" title="Bid Log" size="sm">
                 {props.bidlog.map(({bid, userRole}, index) => getBidMsg(bid, userRole, index))}
-            </DropdownButton>
-            <DropdownButton id="dropdown-basic-button" variant={"primary"} className="m-1" title="Info" size="sm">
-                {getDeclarer()}
-                {getPartner()}
-                {getTrump()}
-                {getWonBid()}
             </DropdownButton>
             <div className = "row1col3">
             <SplitButton
@@ -313,15 +292,6 @@ function Board(props) {
       </div>
 
     </div>
-    );
-    return(
-        
-        <div className="boardCard container"> 
-            <div className="boardCard north">{<img className="boardCardClass" src={imgDict['c'][0]} alt="Card" />}</div>
-            <div className="boardCard west">{<img className="boardCardClass" src={imgDict['c'][1]} alt="Card" />}</div>
-            <div className="boardCard south">{<img className="boardCardClass" src={imgDict['c'][2]} alt="Card" />}</div>
-            <div className="boardCard east">{<img className="boardCardClass" src={imgDict['c'][3]} alt="Card" />}</div>
-        </div>
     );
 }
 export default Board;

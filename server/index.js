@@ -239,6 +239,12 @@ io.on('connection', socket => {
 
     // Add card to board
     rooms[user.room].turnStatus.board.push({user: user.role, id:id,suite:suite,val:val});
+    if (rooms[user.room].bidWinner.partner.card.id === id){
+      console.log("partner revealed")
+      rooms[user.room].partnerRevealed = true;
+      rooms[user.room].partner = user.role;
+    }
+
 
     // Move Card Object from player hand to board
     rooms[user.room].updatePlayerHand(user.role, id);
@@ -287,12 +293,11 @@ io.on('connection', socket => {
         // For each player, search through all 13 cards in hand
         for (i = 0; i < 13; i++){
             if (Number(rooms[user.room].playerHands[player][i].id) === Number(partnerID)){
-                rooms[user.room].bidWinner.partner.suite = suite;
-                rooms[user.room].bidWinner.partner.val = val;
+                rooms[user.room].bidWinner.partner.card = rooms[user.room].playerHands[player][i];
                 rooms[user.room].bidWinner.partner.role = player;
                 rooms[user.room].status = "play";
                 console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
-                io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.suite] })
+                io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.card.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.card.suite] })
                 if (rooms[user.room].bidWinner.trump !== 4) {rooms[user.room].turns++;};
                 updateState(io, rooms, user.room, usernames);
                 return ;

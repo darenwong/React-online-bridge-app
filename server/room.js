@@ -28,8 +28,7 @@ class Room {
             winningBid:null, 
             trump: null, 
             partner: {
-                "suite":null,
-                "val":null,
+                "card": null,
                 "role":null // To Do: Put this as a private state, do not send to client
             }
         }, 
@@ -66,7 +65,9 @@ class Room {
         }, 
         this.roundWinner=null,
         this.winner=[],
-        this.finalScore=0
+        this.finalScore=0,
+        this.partnerRevealed = false,
+        this.partner = null;
     }
 
     /**
@@ -84,8 +85,7 @@ class Room {
             winningBid:null, 
             trump: null, 
             partner: {
-                "suite":null,
-                "val":null,
+                "card":null,
                 "role":null
             }
         };
@@ -114,6 +114,8 @@ class Room {
         this.roundWinner=null;
         this.winner = [];
         this.finalScore = 0;
+        this.partnerRevealed = false;
+        this.partner = null;
     }
     
     /**
