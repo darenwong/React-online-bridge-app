@@ -12,8 +12,8 @@ import Login from './components/login.jsx';
 import { BsChatQuote } from 'react-icons/bs';
 import imgDict from './importSVG';
 
-const socket = io('http://localhost:4000');
-//const socket = io('https://floating-bridge-online.herokuapp.com/');
+//const socket = io('http://localhost:4000');
+const socket = io('https://floating-bridge-server.herokuapp.com/');
 let chatIsActiveGlobal = false;
 
 function App() {
