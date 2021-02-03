@@ -133,6 +133,7 @@ io.on('connection', socket => {
     usernames.push(user.name);
 
     console.log(user.name + ' is connected to room: ' + user.room, usernames);
+    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + ' has joined the room'});
 
     // If user is joining a new room, create that room and add it to global rooms directory 
     if (Object.keys(rooms).indexOf(user.room) === -1){
@@ -228,9 +229,9 @@ io.on('connection', socket => {
     if (rooms[user.room].checkPlayerPlayedBefore(user.role) === true){ return ;}
 
     // Broadcast to room chat if trump is broken
-    if (rooms[user.room].turnStatus.trumpBroken === false && rooms[user.room].checkTrumpBrokenStatus(suite) === true){
+    /*if (rooms[user.room].turnStatus.trumpBroken === false && rooms[user.room].checkTrumpBrokenStatus(suite) === true){
         io.to(user.room).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
-    }
+    }*/
 
     // If board is empty, set first card as starting suit
     if (rooms[user.room].turnStatus.board.length === 0){
@@ -297,7 +298,7 @@ io.on('connection', socket => {
                 rooms[user.room].bidWinner.partner.role = player;
                 rooms[user.room].status = "play";
                 console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
-                io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.card.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.card.suite] })
+                //io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.card.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.card.suite] })
                 if (rooms[user.room].bidWinner.trump !== 4) {rooms[user.room].turns++;};
                 updateState(io, rooms, user.room, usernames);
                 return ;
@@ -348,15 +349,15 @@ function updateState(io, rooms, userRoom, usernames) {
     rooms[userRoom].handleConsecutivePasses(rooms[userRoom].bid);
 
     // If bidding round has ended, let room know that bidding has ended, partner selection phase starts
-    if (rooms[userRoom].status === "selectPartner"){
+    /*if (rooms[userRoom].status === "selectPartner"){
         io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
         io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
-    }
+    }*/
   }
 
   // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
   if (rooms[userRoom].checkGameOver() === true && rooms[userRoom].status != 'gameOver'){
-    io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + rooms[userRoom].finalScore + " tricks! Click Restart to play again"});
+    //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + rooms[userRoom].finalScore + " tricks! Click Restart to play again"});
     rooms[userRoom].status = "gameOver";
   }
 

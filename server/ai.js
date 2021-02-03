@@ -52,6 +52,7 @@ class AI {
                 break;
             case "play":
                 let validCards = this.getValidCards(roomState);
+                if (validCards.length<=0) {return;};
                 let selectedPlayCard = this.getPlayCard(roomState, validCards); //TO DO: Add AI ALGO
                 this.selectPlayCard(roomState, io, userRoom, selectedPlayCard, ()=>callbackUpdate(roomState));
                 break;
