@@ -13,7 +13,8 @@ import { BsChatQuote } from 'react-icons/bs';
 import imgDict from './importSVG';
 
 //const socket = io('http://localhost:4000');
-const socket = io('https://floating-bridge-server.herokuapp.com/');
+const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
+const socket = io(ENDPOINT);
 let chatIsActiveGlobal = false;
 
 function App() {
@@ -353,7 +354,7 @@ function App() {
           <source src={cardPlayVideo} />
         </video>
         
-        <Login usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
+        <Login endpoint={ENDPOINT} usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
 
         <div className="navrow2">
           <Navbar bg="dark" variant="dark" style={{width:'100%'}}>
