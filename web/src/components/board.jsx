@@ -12,6 +12,7 @@ import { IoDocumentLock } from "react-icons/io5";
 
 function Board(props) {
     const [boardPlaceholder, setBoardPlaceholder] = useState([]);
+    const [lastBoard, setLastBoard] = useState([]);
     const [show, setShow] = useState(true);
     /*const [transitions, setTransitions] = useState(useTransition(show, null, {
         from: { opacity: 0, transform: "translateY(-40px)" },
@@ -20,6 +21,7 @@ function Board(props) {
     }));*/
     const [direction, setDirection] = useState("translate(0%, 0%)");
 
+    
     const transitions = useTransition(show, null, {
         from: { opacity: 0, transform: "translate(-50%, -50%)" },
         enter: { opacity: 1, transform: "translate(-50%, -50%)" },
@@ -58,6 +60,8 @@ function Board(props) {
             setTimeout(()=>{
                 setShow(false);
                 setTimeout(()=>{
+                    let tempBoard = [...props.turnStatus.board];
+                    setLastBoard(tempBoard);
                     setBoardPlaceholder([]);
                     setShow(true);
                 },
@@ -78,11 +82,11 @@ function Board(props) {
         }
     };
 
-    function getCardPlayed(role){
-        for (let i = 0; i < boardPlaceholder.length; i++) {
-            if (boardPlaceholder[i].user === role){
-                let suite = boardPlaceholder[i].suite;
-                let val = boardPlaceholder[i].val;
+    function getCardPlayed(role, board){
+        for (let i = 0; i < board.length; i++) {
+            if (board[i].user === role){
+                let suite = board[i].suite;
+                let val = board[i].val;
                 return <div className={"boardCard "+role} style={{zIndex:i+10}}><img className={"boardCardClass "+role} src={imgDict[suite][val-2]} alt="Card" /></div>;            
             }
         }
@@ -257,14 +261,24 @@ function Board(props) {
         </div>
 
         {transitions.map(({ item, key, props }) => item&&
-            <animated.div key={key} style={props} className="boardCard container">
-                {getCardPlayed("North")}
-                {getCardPlayed("West")}
-                {getCardPlayed("South")}
-                {getCardPlayed("East")}
+            <animated.div key={key} style={props} className="boardCard container active">
+                {getCardPlayed("North", boardPlaceholder)}
+                {getCardPlayed("West", boardPlaceholder)}
+                {getCardPlayed("South", boardPlaceholder)}
+                {getCardPlayed("East", boardPlaceholder)}
             </animated.div>
         )}
-
+        {props.status !== "setup" &&
+            <div>
+                <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
+                    {getCardPlayed("North", lastBoard)}
+                    {getCardPlayed("West", lastBoard)}
+                    {getCardPlayed("South", lastBoard)}
+                    {getCardPlayed("East", lastBoard)}
+                </div>
+                <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive)}}>Last Trick</button>
+            </div>
+        }
 
         {props.status === "setup" && props.getNumberPlayers() < 4 &&
           <div className = "startButtonContainer">

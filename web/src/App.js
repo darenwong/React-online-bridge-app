@@ -47,7 +47,7 @@ function App() {
   const [disable, setDisable] = useState(false);
 
   const [chatIsActive, setChatIsActive] = useState(false);
-
+  const [lastTrickIsActive, setLastTrickIsActive] = useState(false);
 
   useEffect(() => {
     console.log("initialised app")
@@ -289,12 +289,12 @@ function App() {
     return (
       
       <div className="App">
-        <div className={(chatIsActive)?"overlay active":"overlay"}>overlay</div>
+        <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"}>overlay</div>
         
         <div className="mainContainer">
           <div className = "playContainer ">
             <div className="mt-2"></div>
-              <Board status={status} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">

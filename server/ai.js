@@ -130,7 +130,7 @@ class AI {
                     roomState.bidWinner.partner.role = player;
                     roomState.status = "play";
                     console.log("AI partner is ", player, card.suite, card.val, roomState.bidWinner.partner);
-                    io.to(userRoom).emit('receivedMsg', {username: "Admin", message: roomState.bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][roomState.bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[roomState.bidWinner.partner.suite] })
+                    //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: roomState.bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][roomState.bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[roomState.bidWinner.partner.suite] })
                     if (roomState.bidWinner.trump !== 4) {roomState.turns++;};
                     return ;
                 }
@@ -195,9 +195,9 @@ class AI {
         if (roomState.checkPlayerPlayedBefore(this.role) === true){ return ;}
     
         // Broadcast to room chat if trump is broken
-        if (roomState.turnStatus.trumpBroken === false && roomState.checkTrumpBrokenStatus(card.suite) === true){
+        /*if (roomState.turnStatus.trumpBroken === false && roomState.checkTrumpBrokenStatus(card.suite) === true){
             io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
-        }
+        }*/
     
         // If board is empty, set first card as starting suit
         if (roomState.turnStatus.board.length === 0){
