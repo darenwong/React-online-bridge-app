@@ -157,7 +157,7 @@ io.on('connection', socket => {
     switch(type){
       case "AI":
         rooms[user.room].players[role] = new AI("AI",user.room,role);
-        socket.join(user.room);
+        socket.join(user.room); //Redundant?
         break
       case "Human":
         // Set user role

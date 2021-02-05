@@ -9,6 +9,7 @@ import {useTransition, animated} from 'react-spring';
 import { FaRegHandshake } from "react-icons/fa";
 import { AiFillUnlock } from "react-icons/ai";
 import { IoDocumentLock } from "react-icons/io5";
+import { GiPokerHand } from "react-icons/gi";
 
 function Board(props) {
     const [boardPlaceholder, setBoardPlaceholder] = useState([]);
@@ -36,13 +37,17 @@ function Board(props) {
     })*/
 
     useEffect(()=>{
+        if (!(props.status === "play" || props.status === "gameOver")) {setLastBoard([]);}
+    },[props.status])
+
+    useEffect(()=>{
         if (props.turnStatus.board.length > 0){
             setBoardPlaceholder(props.turnStatus.board);    
         }
         if (props.turnStatus.board.length >3){
             switch(props.roundWinner.user){
                 case "North":
-                    setDirection("translate(-50%, -100%)");
+                    setDirection("translate(-50%, -150%)");
                     break;
                 case "South":
                     setDirection("translate(-50%, 50%)");
@@ -51,7 +56,7 @@ function Board(props) {
                     setDirection("translate(50%, -50%)");
                     break;
                 case "West":
-                    setDirection("translate(-100%, -50%)");
+                    setDirection("translate(-150%, -50%)");
                     break;
                 default:
                     console.log("Error: Unknown winner")
@@ -268,7 +273,7 @@ function Board(props) {
                 {getCardPlayed("East", boardPlaceholder)}
             </animated.div>
         )}
-        {props.status !== "setup" &&
+        {(props.status === "play" || props.status === "gameOver") &&
             <div>
                 <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
                     {getCardPlayed("North", lastBoard)}
@@ -276,7 +281,10 @@ function Board(props) {
                     {getCardPlayed("South", lastBoard)}
                     {getCardPlayed("East", lastBoard)}
                 </div>
-                <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive)}}>Last Trick</button>
+                <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
+                    <GiPokerHand className="lastTrickIcon"/>
+                    <div className="lastTrickButtonText">Last Trick</div>
+                </button>
             </div>
         }
 

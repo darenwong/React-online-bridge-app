@@ -294,7 +294,7 @@ function App() {
         <div className="mainContainer">
           <div className = "playContainer ">
             <div className="mt-2"></div>
-              <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">
@@ -331,7 +331,7 @@ function App() {
           <div className = {getChatClassName()}>
             <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
           </div>
-          <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive); chatIsActiveGlobal=!chatIsActiveGlobal}}>
+          <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive); chatIsActiveGlobal=!chatIsActiveGlobal; if (lastTrickIsActive) {setLastTrickIsActive(false)}}}>
             <BsChatQuote className="chatIconClass"/>
             {getNotificationNumber() > 0 &&
               <div className="chatBadge">{getNotificationNumber()}</div>

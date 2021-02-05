@@ -280,8 +280,22 @@
   background-color: lightgray;
 }
 
+.lastTrickToggleButton:active {
+  transform: scale(0.95);
+}
+
+.lastTrickIcon {
+  width: 60%;
+  height: 60%;
+}
+
+.lastTrickButtonText {
+  font-size: xx-small;
+}
+
 .lastTrick {
   z-index: 101;
+  transition: 0.3s;
 }
 
 .boardCard.container {
@@ -295,7 +309,6 @@
   width: 200px;
   align-items: center;
   justify-content: center;
-  transition: 0.5s;
 }
 .boardCard.container.active {
   display: flex;

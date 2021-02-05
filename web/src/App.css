@@ -97,10 +97,15 @@
   border: none;
   border-radius: 10vh;
   z-index: 101;
+  transition: 0.3s;
 }
 
 .chatToggleButton:hover {
   background-color: lightgray;
+}
+
+.chatToggleButton:active {
+  transform: scale(0.95);
 }
 
 .chatIconClass {
