@@ -17,7 +17,7 @@ class Room {
      */
     constructor() {
         this.disable=false, 
-        this.turns=0, 
+        this.turns=Math.floor(Math.random() * 4), 
         this.status="setup", 
         this.bid=0, 
         this.bidlog=[], 
@@ -74,7 +74,7 @@ class Room {
      * A method to reset room state
      */
     restart() {
-        this.turns = 0;
+        this.turns = Math.floor(Math.random() * 4);
         this.status = "setup";
         this.bid = 0;
         this.bidlog = [];
