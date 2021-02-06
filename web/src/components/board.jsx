@@ -11,12 +11,14 @@ import { AiFillUnlock } from "react-icons/ai";
 import { IoDocumentLock } from "react-icons/io5";
 import { GiPokerHand } from "react-icons/gi";
 
+
 function Board(props) {
     const [boardPlaceholder, setBoardPlaceholder] = useState([]);
     const [lastBoard, setLastBoard] = useState([]);
     const [lastRoundWinner, setLastRoundWinner] = useState(null);
     const [currentRoundWinner, setCurrentRoundWinner] = useState(null);
     const [show, setShow] = useState(true);
+    //const [bidClickSound] = useState(new Audio('../sound/zapsplat_leisure_toy_button_plastic_press_19550.wav', "anonymous"));
     /*const [transitions, setTransitions] = useState(useTransition(show, null, {
         from: { opacity: 0, transform: "translateY(-40px)" },
         enter: { opacity: 1, transform: "translateY(0px)" },
@@ -207,8 +209,6 @@ function Board(props) {
         let numberOfEmptySeats = 4-props.getNumberPlayers();
         return (numberOfEmptySeats === 1) ? `Waiting for 1 more player to start...` : `Waiting for ${numberOfEmptySeats} more players to start...`;
     }
-
-
     return(
     <div className="boardContainer">
         <div className = "row1">
@@ -217,17 +217,17 @@ function Board(props) {
                 {props.bidlog.map(({bid, userRole}, index) => getBidMsg(bid, userRole, index))}
             </DropdownButton>
             <div className = "row1col3">
-            <SplitButton
-                size="sm"
-                id={`dropdown-split-variants-primary`}
-                variant={"primary"}
-                title={"Spectator"}
-                className="m-1"
-                onClick = {(event) => props.handleSelectRole("Spectator","Human")}
-            >
-                {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
-            </SplitButton>
-            <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Restart</Button>
+                <SplitButton
+                    size="sm"
+                    id={`dropdown-split-variants-primary`}
+                    variant={"primary"}
+                    title={"Spectator"}
+                    className="m-1"
+                    onClick = {(event) => props.handleSelectRole("Spectator","Human")}
+                >
+                    {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
+                </SplitButton>
+                <Button style={{marginLeft:"10px"}} onClick={() => { props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Restart</Button>
             </div>
         </div>
       
@@ -324,7 +324,6 @@ function Board(props) {
             </div>
         }
       </div>
-
     </div>
     );
 }

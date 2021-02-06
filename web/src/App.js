@@ -11,13 +11,26 @@ import cardPlayVideo from './videos/cardsplay.mp4';
 import Login from './components/login.jsx';
 import { BsChatQuote } from 'react-icons/bs';
 import imgDict from './importSVG';
+import { Howl, Howler } from 'howler';
+import bidAudio from './sound/zapsplat_leisure_toy_button_plastic_press_19550.mp3';
+import cardFlipAudio from './sound/zapsplat_leisure_playing_card_turn_over_on_table_001_10410.mp3';
+import useSound from 'use-sound';
+/*const cardAudio = new Howl({
+  src: ["./sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3"],
+  autoplay: true
+});
+cardAudio.play();*/
+import cardAudio from './sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3';
 
 //const socket = io('http://localhost:4000');
-const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
+const ENDPOINT = 'http://localhost:4000';
+//const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
 const socket = io(ENDPOINT);
 let chatIsActiveGlobal = false;
 
 function App() {
+  const [cardAudioPlay, { cardAudioStop }] = useSound(cardAudio);
+  //const [bidAudioPlay, { bidAudioStop }] = useSound(bidAudio);
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
   const [usernames, setUsernames] = useState([]);
@@ -98,6 +111,11 @@ function App() {
     })
     
   }, []);
+
+  useEffect(()=>{
+    if (turnStatus.board.length > 3) console.log('play',playSound("card-flip-audio"));
+    else console.log('play',playSound("bid-audio"));
+  }, [turn])
 
   useEffect(()=>{
     if (chatIsActive === true) {
@@ -285,6 +303,11 @@ function App() {
     return count;
   }
 
+  async function playSound(audioClass) {
+    const audioEl = document.getElementsByClassName(audioClass)[0];
+    if (audioEl) await audioEl.play();
+  }
+
   if (isLoggedIn === true) {
     return (
       
@@ -340,9 +363,12 @@ function App() {
         </div>
         {status !== "setup" &&
           <div className="handContainer">
-            {hand.map(({id,suite,val}) => <button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled={getCardDisableStatus(id,suite,val)} key = {id} className = {getCardClassTest(suite)}><img className={getSVGClassName(id,suite,val)} src={imgDict[suite][val-2]} alt="Logo" /></button>)}
+            {hand.map(({id,suite,val}) => <button onMouseEnter={()=>{cardAudioPlay();}} onClick = {(event) => {handleClickCard(event,id,suite,val)}}  disabled={getCardDisableStatus(id,suite,val)} key = {id} className = {getCardClassTest(suite)}><img className={getSVGClassName(id,suite,val)} src={imgDict[suite][val-2]} alt="Logo" /></button>)}
           </div>
         }
+        <audio className="bid-audio" preload="auto" crossOrigin="anonymous" src={bidAudio}></audio>
+        <audio className="card-audio" preload="auto" crossOrigin="anonymous" src={cardAudio}></audio>
+        <audio className="card-flip-audio" preload="auto" crossOrigin="anonymous" src={cardFlipAudio}></audio>
       </div>
     )
   }else{
@@ -368,6 +394,10 @@ function App() {
   }
 
 }
-
+/*{status !== "setup" &&
+<div className="handContainer">
+  {hand.map(({id,suite,val}) => <button onMouseEnter={cardAudioPlay} onMouseLeave={cardAudioStop} onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled={getCardDisableStatus(id,suite,val)} key = {id} className = {getCardClassTest(suite)}><img className={getSVGClassName(id,suite,val)} src={imgDict[suite][val-2]} alt="Logo" /></button>)}
+</div>
+}*/
 export default App;
 
