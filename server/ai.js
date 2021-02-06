@@ -193,11 +193,9 @@ class AI {
 
         // Player cannot play twice in the same round. If caught, return
         if (roomState.checkPlayerPlayedBefore(this.role) === true){ return ;}
+        
+        // Check and update trump broken status
         roomState.checkTrumpBrokenStatus(card.suite);
-        // Broadcast to room chat if trump is broken
-        /*if (roomState.turnStatus.trumpBroken === false && roomState.checkTrumpBrokenStatus(card.suite) === true){
-            io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
-        }*/
     
         // If board is empty, set first card as starting suit
         if (roomState.turnStatus.board.length === 0){
