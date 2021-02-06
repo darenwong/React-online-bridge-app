@@ -227,7 +227,8 @@ io.on('connection', socket => {
 
     // Player cannot play twice in the same round. If caught, return
     if (rooms[user.room].checkPlayerPlayedBefore(user.role) === true){ return ;}
-
+    
+    rooms[user.room].checkTrumpBrokenStatus(suite);
     // Broadcast to room chat if trump is broken
     /*if (rooms[user.room].turnStatus.trumpBroken === false && rooms[user.room].checkTrumpBrokenStatus(suite) === true){
         io.to(user.room).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
