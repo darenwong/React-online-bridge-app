@@ -84,14 +84,7 @@ app.get("/login/:username/:password", async (req,res)=>{
     console.log(e, 'bad request');
   }
 })
-/*
-app.post("/", async (req, res) => {
-  console.log('req',req.body);
-  const {name} = req.body;
-  const newName = await pool.query("INSERT INTO testtable (testname) VALUES ($1)",[name]);
-  res.json(newName);
-});
-*/
+
 // Initialise a global directory of rooms with just one room, which is the main room
 let rooms = {'main': new Room() };
 // Initialise a global list of users socket ID
@@ -345,12 +338,6 @@ function updateState(io, rooms, userRoom, usernames) {
   if (rooms[userRoom].status === "bid"){
     // Determine if there have been consecutive passes. If yes, conclude the bidding round
     rooms[userRoom].handleConsecutivePasses(rooms[userRoom].bid);
-
-    // If bidding round has ended, let room know that bidding has ended, partner selection phase starts
-    /*if (rooms[userRoom].status === "selectPartner"){
-        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
-        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
-    }*/
   }
 
   // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
