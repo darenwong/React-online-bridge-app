@@ -14,6 +14,8 @@ import { GiPokerHand } from "react-icons/gi";
 function Board(props) {
     const [boardPlaceholder, setBoardPlaceholder] = useState([]);
     const [lastBoard, setLastBoard] = useState([]);
+    const [lastRoundWinner, setLastRoundWinner] = useState(null);
+    const [currentRoundWinner, setCurrentRoundWinner] = useState(null);
     const [show, setShow] = useState(true);
     /*const [transitions, setTransitions] = useState(useTransition(show, null, {
         from: { opacity: 0, transform: "translateY(-40px)" },
@@ -62,11 +64,14 @@ function Board(props) {
                     console.log("Error: Unknown winner")
             };
             console.log('transitions', transitions);
+            setLastRoundWinner(props.roundWinner);
+            setCurrentRoundWinner(props.roundWinner);
             setTimeout(()=>{
                 setShow(false);
                 setTimeout(()=>{
                     let tempBoard = [...props.turnStatus.board];
                     setLastBoard(tempBoard);
+                    setCurrentRoundWinner(null);
                     setBoardPlaceholder([]);
                     setShow(true);
                 },
@@ -87,16 +92,23 @@ function Board(props) {
         }
     };
 
-    function getCardPlayed(role, board){
+    
+    function getCardPlayed(role, board, roundWinner){
         for (let i = 0; i < board.length; i++) {
             if (board[i].user === role){
                 let suite = board[i].suite;
                 let val = board[i].val;
-                return <div className={"boardCard "+role} style={{zIndex:i+10}}><img className={"boardCardClass "+role} src={imgDict[suite][val-2]} alt="Card" /></div>;            
+                return <div className={"boardCard "+role} style={{zIndex:i+10}}><img className={getCardImageClass(role, roundWinner)} src={imgDict[suite][val-2]} alt="Card" /></div>;            
             }
         }
         return <div/>;
     };
+
+    function getCardImageClass(role, roundWinner){
+        if (!roundWinner){ return "boardCardClass "+role;}
+        else if(role === roundWinner.user){ return "boardCardClass "+role+" winner";}
+        else {return "boardCardClass "+role+" loser";}
+    }
 
     function getScoreboard(role){
         return (<button className="scoreboard">{props.scoreboard[role]}</button>);
@@ -267,19 +279,19 @@ function Board(props) {
 
         {transitions.map(({ item, key, props }) => item&&
             <animated.div key={key} style={props} className="boardCard container active">
-                {getCardPlayed("North", boardPlaceholder)}
-                {getCardPlayed("West", boardPlaceholder)}
-                {getCardPlayed("South", boardPlaceholder)}
-                {getCardPlayed("East", boardPlaceholder)}
+                {getCardPlayed("North", boardPlaceholder, currentRoundWinner)}
+                {getCardPlayed("West", boardPlaceholder, currentRoundWinner)}
+                {getCardPlayed("South", boardPlaceholder, currentRoundWinner)}
+                {getCardPlayed("East", boardPlaceholder, currentRoundWinner)}
             </animated.div>
         )}
         {(props.status === "play" || props.status === "gameOver") &&
             <div>
                 <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
-                    {getCardPlayed("North", lastBoard)}
-                    {getCardPlayed("West", lastBoard)}
-                    {getCardPlayed("South", lastBoard)}
-                    {getCardPlayed("East", lastBoard)}
+                    {getCardPlayed("North", lastBoard, lastRoundWinner)}
+                    {getCardPlayed("West", lastBoard, lastRoundWinner)}
+                    {getCardPlayed("South", lastBoard, lastRoundWinner)}
+                    {getCardPlayed("East", lastBoard, lastRoundWinner)}
                 </div>
                 <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
                     <GiPokerHand className="lastTrickIcon"/>

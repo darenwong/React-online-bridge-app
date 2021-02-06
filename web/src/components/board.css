@@ -191,6 +191,14 @@
   box-shadow: 5px 10px 18px black;
 }
 
+.boardCard .winner {
+  filter: brightness(100%);
+}
+
+.boardCard .loser {
+  filter: brightness(50%);
+}
+
 .boardCardClass.North {
   animation: northflyin 1.2s ease none;
   transition: 1s ease-in-out;
