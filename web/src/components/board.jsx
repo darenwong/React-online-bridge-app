@@ -9,9 +9,13 @@ import {useTransition, animated} from 'react-spring';
 import { FaRegHandshake } from "react-icons/fa";
 import { AiFillUnlock } from "react-icons/ai";
 import { IoDocumentLock } from "react-icons/io5";
+import { GiPokerHand } from "react-icons/gi";
 
 function Board(props) {
     const [boardPlaceholder, setBoardPlaceholder] = useState([]);
+    const [lastBoard, setLastBoard] = useState([]);
+    const [lastRoundWinner, setLastRoundWinner] = useState(null);
+    const [currentRoundWinner, setCurrentRoundWinner] = useState(null);
     const [show, setShow] = useState(true);
     /*const [transitions, setTransitions] = useState(useTransition(show, null, {
         from: { opacity: 0, transform: "translateY(-40px)" },
@@ -20,6 +24,7 @@ function Board(props) {
     }));*/
     const [direction, setDirection] = useState("translate(0%, 0%)");
 
+    
     const transitions = useTransition(show, null, {
         from: { opacity: 0, transform: "translate(-50%, -50%)" },
         enter: { opacity: 1, transform: "translate(-50%, -50%)" },
@@ -34,13 +39,17 @@ function Board(props) {
     })*/
 
     useEffect(()=>{
+        if (!(props.status === "play" || props.status === "gameOver")) {setLastBoard([]);}
+    },[props.status])
+
+    useEffect(()=>{
         if (props.turnStatus.board.length > 0){
             setBoardPlaceholder(props.turnStatus.board);    
         }
         if (props.turnStatus.board.length >3){
             switch(props.roundWinner.user){
                 case "North":
-                    setDirection("translate(-50%, -100%)");
+                    setDirection("translate(-50%, -150%)");
                     break;
                 case "South":
                     setDirection("translate(-50%, 50%)");
@@ -49,15 +58,20 @@ function Board(props) {
                     setDirection("translate(50%, -50%)");
                     break;
                 case "West":
-                    setDirection("translate(-100%, -50%)");
+                    setDirection("translate(-150%, -50%)");
                     break;
                 default:
                     console.log("Error: Unknown winner")
             };
             console.log('transitions', transitions);
+            setLastRoundWinner(props.roundWinner);
+            setCurrentRoundWinner(props.roundWinner);
             setTimeout(()=>{
                 setShow(false);
                 setTimeout(()=>{
+                    let tempBoard = [...props.turnStatus.board];
+                    setLastBoard(tempBoard);
+                    setCurrentRoundWinner(null);
                     setBoardPlaceholder([]);
                     setShow(true);
                 },
@@ -78,16 +92,23 @@ function Board(props) {
         }
     };
 
-    function getCardPlayed(role){
-        for (let i = 0; i < boardPlaceholder.length; i++) {
-            if (boardPlaceholder[i].user === role){
-                let suite = boardPlaceholder[i].suite;
-                let val = boardPlaceholder[i].val;
-                return <div className={"boardCard "+role} style={{zIndex:i+10}}><img className={"boardCardClass "+role} src={imgDict[suite][val-2]} alt="Card" /></div>;            
+    
+    function getCardPlayed(role, board, roundWinner){
+        for (let i = 0; i < board.length; i++) {
+            if (board[i].user === role){
+                let suite = board[i].suite;
+                let val = board[i].val;
+                return <div className={"boardCard "+role} style={{zIndex:i+10}}><img className={getCardImageClass(role, roundWinner)} src={imgDict[suite][val-2]} alt="Card" /></div>;            
             }
         }
         return <div/>;
     };
+
+    function getCardImageClass(role, roundWinner){
+        if (!roundWinner){ return "boardCardClass "+role;}
+        else if(role === roundWinner.user){ return "boardCardClass "+role+" winner";}
+        else {return "boardCardClass "+role+" loser";}
+    }
 
     function getScoreboard(role){
         return (<button className="scoreboard">{props.scoreboard[role]}</button>);
@@ -257,14 +278,27 @@ function Board(props) {
         </div>
 
         {transitions.map(({ item, key, props }) => item&&
-            <animated.div key={key} style={props} className="boardCard container">
-                {getCardPlayed("North")}
-                {getCardPlayed("West")}
-                {getCardPlayed("South")}
-                {getCardPlayed("East")}
+            <animated.div key={key} style={props} className="boardCard container active">
+                {getCardPlayed("North", boardPlaceholder, currentRoundWinner)}
+                {getCardPlayed("West", boardPlaceholder, currentRoundWinner)}
+                {getCardPlayed("South", boardPlaceholder, currentRoundWinner)}
+                {getCardPlayed("East", boardPlaceholder, currentRoundWinner)}
             </animated.div>
         )}
-
+        {(props.status === "play" || props.status === "gameOver") &&
+            <div>
+                <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
+                    {getCardPlayed("North", lastBoard, lastRoundWinner)}
+                    {getCardPlayed("West", lastBoard, lastRoundWinner)}
+                    {getCardPlayed("South", lastBoard, lastRoundWinner)}
+                    {getCardPlayed("East", lastBoard, lastRoundWinner)}
+                </div>
+                <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
+                    <GiPokerHand className="lastTrickIcon"/>
+                    <div className="lastTrickButtonText">Last Trick</div>
+                </button>
+            </div>
+        }
 
         {props.status === "setup" && props.getNumberPlayers() < 4 &&
           <div className = "startButtonContainer">

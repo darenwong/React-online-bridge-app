@@ -157,7 +157,7 @@ io.on('connection', socket => {
     switch(type){
       case "AI":
         rooms[user.room].players[role] = new AI("AI",user.room,role);
-        socket.join(user.room);
+        socket.join(user.room); //Redundant?
         break
       case "Human":
         // Set user role
@@ -227,11 +227,9 @@ io.on('connection', socket => {
 
     // Player cannot play twice in the same round. If caught, return
     if (rooms[user.room].checkPlayerPlayedBefore(user.role) === true){ return ;}
-
-    // Broadcast to room chat if trump is broken
-    /*if (rooms[user.room].turnStatus.trumpBroken === false && rooms[user.room].checkTrumpBrokenStatus(suite) === true){
-        io.to(user.room).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
-    }*/
+    
+    // Check and update trump broken status
+    rooms[user.room].checkTrumpBrokenStatus(suite);
 
     // If board is empty, set first card as starting suit
     if (rooms[user.room].turnStatus.board.length === 0){
