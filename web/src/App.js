@@ -11,26 +11,23 @@ import cardPlayVideo from './videos/cardsplay.mp4';
 import Login from './components/login.jsx';
 import { BsChatQuote } from 'react-icons/bs';
 import imgDict from './importSVG';
-import { Howl, Howler } from 'howler';
-import bidAudio from './sound/zapsplat_leisure_toy_button_plastic_press_19550.mp3';
+import backgroundImg from './importBackgroundImg';
+
+import bidAudio from './sound/zapsplat_vehicles_car_radio_button_press_interior_nissan_patrol_2019_002_55345.mp3';
 import cardFlipAudio from './sound/zapsplat_leisure_playing_card_turn_over_on_table_001_10410.mp3';
 import useSound from 'use-sound';
-/*const cardAudio = new Howl({
-  src: ["./sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3"],
-  autoplay: true
-});
-cardAudio.play();*/
 import cardAudio from './sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3';
+import TemporaryDrawer from './drawerComponents/drawer.jsx';
 
 //const socket = io('http://localhost:4000');
-const ENDPOINT = 'http://localhost:4000';
-//const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
+//const ENDPOINT = 'http://localhost:4000';
+const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
 const socket = io(ENDPOINT);
 let chatIsActiveGlobal = false;
 
 function App() {
   const [cardAudioPlay, { cardAudioStop }] = useSound(cardAudio);
-  //const [bidAudioPlay, { bidAudioStop }] = useSound(bidAudio);
+  const [bgImg, setBgImg] = useState(backgroundImg[0]);
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
   const [usernames, setUsernames] = useState([]);
@@ -67,7 +64,6 @@ function App() {
     socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
 
     socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, scoreboard, winner}) => {
-      console.log('number clients B', clients, players)
       setBidWinner(bidWinner);
       setRoundWinner(roundWinner)
       setStatus(status);
@@ -133,16 +129,7 @@ function App() {
     setMsg('');
     event.preventDefault();
   }
-/*
-  function handleSelectRole(role, event) {
-    socket.emit('setRole', {role: role, user: name});
-  }
-*/
 
-  const getChatIsActive = () => {
-    console.log('chatIsActive', chatIsActive, chat);
-    return chatIsActive
-  };
 
   function handleSelectRole(role, event) {
     switch(event) {
@@ -312,12 +299,13 @@ function App() {
     return (
       
       <div className="App">
-        <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"}>overlay</div>
+        <TemporaryDrawer setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner}/>
+        <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false)}}></div>
         
-        <div className="mainContainer">
+        <div className="mainContainer" style={{backgroundImage:`url(${bgImg})`}}>
           <div className = "playContainer ">
             <div className="mt-2"></div>
-              <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} bidlog={bidlog} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">

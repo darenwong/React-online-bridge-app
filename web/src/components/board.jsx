@@ -184,9 +184,6 @@ function Board(props) {
         return (props.players[role] === null) ? '' : ': ' + props.players[role].name; 
     }
 
-    function getBidMsg(bid, userRole,index){
-        return (bid === "pass") ? <Dropdown.Item key={index} disabled ={true}>{userRole + ": Pass"}</Dropdown.Item> : [<Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&clubs;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&diams;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&hearts;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&spades;</Dropdown.Item>, <Dropdown.Item key={index} disabled ={true}>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1) + " NT"}</Dropdown.Item>][(Number(bid)-1)%5];
-    }
     
     function getSelectRoleButton(role){
         return (
@@ -213,9 +210,6 @@ function Board(props) {
     <div className="boardContainer">
         <div className = "row1">
             <div className="row1col2 mr-auto"></div>
-            <DropdownButton id="dropdown-basic-button" variant={"primary"} className="m-1 bidlog" title="Bid Log" size="sm">
-                {props.bidlog.map(({bid, userRole}, index) => getBidMsg(bid, userRole, index))}
-            </DropdownButton>
             <div className = "row1col3">
                 <SplitButton
                     size="sm"

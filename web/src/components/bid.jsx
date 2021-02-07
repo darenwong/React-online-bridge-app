@@ -3,18 +3,12 @@ import DropdownButton from 'react-bootstrap/DropdownButton'
 import Dropdown from 'react-bootstrap/Dropdown'
 import ButtonGroup from 'react-bootstrap/ButtonGroup'
 import './bid.css'
-import bidAudioPath from './../sound/zapsplat_leisure_toy_button_plastic_press_19550.mp3';
 
 function Bid(props) {
     function getCardDisplay(suite) {
         let symbol = {"c": <div>&clubs;</div>, "d": <div>&diams;</div>, "h": <div>&hearts;</div>, "s": <div>&spades;</div>, "NT": <div>NT</div>};
         return symbol[suite];
       }
-
-    async function playSound(audioClass) {
-        const audioEl = document.getElementsByClassName(audioClass)[0];
-        await audioEl.play();
-    }
 
     return (
         <div>
@@ -43,7 +37,6 @@ function Bid(props) {
                 ),
             )}
             <button onClick = {(event) => {props.handleSelectPass(event)}} disabled={props.turn !== props.role} className = "btn btn-danger btn-m m-2"> Pass </button>
-            <audio className="bid-audio" preload="auto" crossOrigin="anonymous" src={bidAudioPath}></audio>
             </div>
         </div>
     );
