@@ -208,63 +208,61 @@ function Board(props) {
     }
     return(
     <div className="boardContainer">
-        <div className = "row1">
-            <div className="row1col2 mr-auto"></div>
-            <div className = "row1col3">
-                <SplitButton
-                    size="sm"
-                    id={`dropdown-split-variants-primary`}
-                    variant={"primary"}
-                    title={"Spectator"}
-                    className="m-1"
-                    onClick = {(event) => props.handleSelectRole("Spectator","Human")}
-                >
-                    {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
-                </SplitButton>
-                <Button style={{marginLeft:"10px"}} onClick={() => { props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Restart</Button>
-            </div>
+        <div className="boardTopButton">
+            <SplitButton
+                size="sm"
+                id={`dropdown-split-variants-primary`}
+                variant={"primary"}
+                title={"Spectator"}
+                className="spectatorButton"
+                onClick = {(event) => props.handleSelectRole("Spectator","Human")}
+            >
+                {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
+            </SplitButton>
+            <Button style={{marginLeft:"10px"}} onClick={() => { props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "restartButton">Restart</Button>
         </div>
+
       
       <div className = "board">
-        <div className = "board north">
-            <div className = "board stat">
+        <div className = "north">
+            <div className = "stat">
                 {getContract("North")}
                 {getPartnerCard("North")}
             </div>
-            <div className = "board top">
+            <div className = "top">
                 {getSelectRoleButton("North")}
                 {getScoreboard("North")}
             </div>
             {getBid("North")}
         </div>
-        <div className="board west">
-            <div className = "board stat">
+        <div className="west">
+            <div className = "stat">
                 {getContract("West")}
                 {getPartnerCard("West")}
             </div>
-            <div className = "board top">
+            <div className = "top">
                 {getSelectRoleButton("West")}
                 {getScoreboard("West")}
             </div>
             {getBid("West")}
         </div>
-        <div className="board east">
-            <div className = "board stat">
+        <div className="east">
+            <div className = "stat">
                 {getContract("East")}
                 {getPartnerCard("East")}
             </div>
-            <div className = "board top">
+            <div className = "top">
                 {getSelectRoleButton("East")}
                 {getScoreboard("East")}
             </div>
             {getBid("East")}
         </div>
-        <div className = "board south">
-            <div className = "board stat">
+        <div className = "south">
+            <div className = "stat">
                 {getContract("South")}
                 {getPartnerCard("South")}
             </div>
-            <div className = "board top">
+            <div className = "top">
                 {getSelectRoleButton("South")}
                 {getScoreboard("South")}
             </div>
@@ -280,18 +278,18 @@ function Board(props) {
             </animated.div>
         )}
         {(props.status === "play" || props.status === "gameOver") &&
-            <div>
-                <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
-                    {getCardPlayed("North", lastBoard, lastRoundWinner)}
-                    {getCardPlayed("West", lastBoard, lastRoundWinner)}
-                    {getCardPlayed("South", lastBoard, lastRoundWinner)}
-                    {getCardPlayed("East", lastBoard, lastRoundWinner)}
-                </div>
-                <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
-                    <GiPokerHand className="lastTrickIcon"/>
-                    <div className="lastTrickButtonText">Last Trick</div>
-                </button>
+            <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
+                {getCardPlayed("North", lastBoard, lastRoundWinner)}
+                {getCardPlayed("West", lastBoard, lastRoundWinner)}
+                {getCardPlayed("South", lastBoard, lastRoundWinner)}
+                {getCardPlayed("East", lastBoard, lastRoundWinner)}
             </div>
+        }
+        {(props.status === "play" || props.status === "gameOver") &&
+            <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
+                <GiPokerHand className="lastTrickIcon"/>
+                <div className="lastTrickButtonText">Last Trick</div>
+            </button>
         }
 
         {props.status === "setup" && props.getNumberPlayers() < 4 &&

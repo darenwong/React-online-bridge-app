@@ -4,57 +4,146 @@
   flex-wrap: wrap;
 }
 
-.row1 {
-  display: flex;
-  flex-direction: row;
+.boardTopButton {
+  position: absolute;
+  width: fit-content;
+  top: 5px;
+  right: 5px;
+  z-index: 100;
+}
+
+.spectatorButton {
+  z-index: 100;
+}
+
+.restartButton {
+  z-index: 100;
 }
 
 .board {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  position: absolute;
+  width: 100%;
+  max-width: 1000px;
+  height: 60%;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  overflow: hidden;
 }
 
-.board.stat {
+.board .north {
+  position: absolute;
+  top: 0%;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  z-index: 100;
+}
+
+.board .west {
+  position: absolute;
+  transform: translate(0%, -200%) rotateZ(90deg);
+  transform-origin: 0% 100%;
+  top: 50%;
+  left: 0%;
+  z-index: 100;
+}
+
+.board .east {
+  position: absolute;
+  top: 50%;
+  right: 0%;
+  transform: translate(0%, -200%) rotateZ(-90deg);
+  transform-origin: 100% 100%;
+  z-index: 100;
+}
+
+.board .south {
+  position: absolute;
+  bottom: 0%;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  z-index: 100;
+}
+
+.board .top {
+  display: flex;
+  flex-direction: row;
+}
+
+.board .stat {
   display: flex;
   flex-direction: row;
   justify-content: center;
   width: 100%;
   align-items: center;
-  margin: 5px;
+  display: none;
 }
 
-.board.north {
+.boardCard.container {
+  display: flex;
   position: absolute;
-  top: 20%;
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0);
+  background-color: transparent;
+  height: min(calc(min(60vh, 100vw) - 2rem * 2), 30vh);
+  width: min(calc(min(60vh, 100vw) - 2rem * 2), 30vh);
+  align-items: center;
+  justify-content: center;
 }
 
-.board.west {
-  position: absolute;
-  top: 45%;
-  left: 10%;
-  transform: translate(-50%, -50%);
+.boardCard.container.active {
+  display: flex;
+  transform: translate(-50%, -50%) scale(1);
+  background-color: transparent;
+  align-items: center;
+  justify-content: center;
 }
-
-.board.east {
+.boardCard.North {
+  height: 50%;
   position: absolute;
-  top: 45%;
-  right: 10%;
-  transform: translate(50%, -50%);
-}
-
-.board.south {
-  position: absolute;
-  top: 70%;
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -100%);
+}
+.boardCard.South {
+  height: 50%;
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 100%);
+}
+.boardCard.East {
+  height: 50%;
+  position: absolute;
+  top: 50%;
+  right: 50%;
+  transform: translate(100%, -50%);
+}
+.boardCard.West {
+  height: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-100%, -50%);
 }
 
-.board.top {
+.playerStatContainer {
   display: flex;
   flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(143, 188, 143, 0.5);
+  border-radius: 10%;
+  margin-right: 5px;
+  height: 100%;
+  width: 100%;
+}
+
+.playerStatContainer.red {
+  background-color: rgba(255, 0, 0, 0.5);
 }
 
 .dropdown-menu {
@@ -62,44 +151,9 @@
   max-height: 15vh;
 }
 
-.col1,
-.col3,
-.col4,
-.col5 {
-  justify-content: center;
-  align-self: center;
-  flex: 1;
-}
-
-.col2 {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  border: 1px rgb(255, 255, 255) solid;
-}
-
-.col2row1 {
-  display: flex;
-  flex-direction: row;
-  align-self: center;
-  border: 1px rgb(255, 255, 255) solid;
-  flex-wrap: wrap;
-}
-.col2row2 {
-  align-self: center;
-  border: 1px rgb(255, 255, 255) solid;
-}
-.col2row3 {
-  display: flex;
-  flex-direction: row;
-  align-self: center;
-  border: 1px rgb(255, 255, 255) solid;
-  flex-wrap: wrap;
-}
-
 .bidBoardContainer {
   display: flex;
-  flex: row;
+  flex-direction: row;
   margin-top: 5px;
 }
 
@@ -167,7 +221,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: medium;
+  font-size: 1vw;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -184,8 +238,7 @@
 }
 
 .boardCardClass {
-  width: 10vw;
-  max-width: 100px;
+  height: 100%;
   opacity: 1;
   transform: translate(0, 0) scale(1);
   box-shadow: 5px 10px 18px black;
@@ -306,55 +359,6 @@
   transition: 0.3s;
 }
 
-.boardCard.container {
-  display: flex;
-  position: absolute;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  background-color: transparent;
-  height: 200px;
-  width: 200px;
-  align-items: center;
-  justify-content: center;
-}
-.boardCard.container.active {
-  display: flex;
-  position: absolute;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(1);
-  background-color: transparent;
-  height: 200px;
-  width: 200px;
-  align-items: center;
-  justify-content: center;
-}
-.boardCard.North {
-  position: absolute;
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-.boardCard.South {
-  position: absolute;
-  top: 70%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-.boardCard.East {
-  position: absolute;
-  top: 50%;
-  left: 70%;
-  transform: translate(-50%, -50%);
-}
-.boardCard.West {
-  position: absolute;
-  top: 50%;
-  left: 30%;
-  transform: translate(-50%, -50%);
-}
-
 .roleButton {
   z-index: 100;
 }
@@ -382,7 +386,6 @@
 
 .scoreboard {
   margin-left: 5px;
-  margin-right: 25px;
   width: 2rem;
   background-color: royalblue;
   color: white;
@@ -390,18 +393,15 @@
   transition: 1s;
 }
 
-.playerStatContainer {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(143, 188, 143, 0.5);
-  border-radius: 10%;
-  margin-left: 5px;
-  padding: 5px;
-}
-
-.playerStatContainer.red {
-  background-color: rgba(255, 0, 0, 0.5);
+@media screen and (max-width: 600px), screen and (max-height: 600px) {
+  .btn {
+    font-size: 0.5rem !important;
+  }
+  .roleButton {
+    font-size: 0.5rem !important;
+  }
+  .board {
+    top: 35px;
+    height: 70%;
+  }
 }

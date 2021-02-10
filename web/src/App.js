@@ -18,6 +18,7 @@ import cardFlipAudio from './sound/zapsplat_leisure_playing_card_turn_over_on_ta
 import useSound from 'use-sound';
 import cardAudio from './sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3';
 import TemporaryDrawer from './drawerComponents/drawer.jsx';
+import SideBar from './navbarComponents/sidebar.jsx';
 
 //const socket = io('http://localhost:4000');
 //const ENDPOINT = 'http://localhost:4000';
@@ -304,7 +305,6 @@ function App() {
         
         <div className="mainContainer" style={{backgroundImage:`url(${bgImg})`}}>
           <div className = "playContainer ">
-            <div className="mt-2"></div>
               <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
