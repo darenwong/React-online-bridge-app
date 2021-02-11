@@ -40,6 +40,7 @@ function App() {
   const [status, setStatus] = useState('setup');
   const [turn, setTurn] = useState(0);
   const [role, setRole] = useState('');
+  const [switchedRole, setSwitchedRole] = useState(false);
   const [players, setPlayers] = useState({"North":null,"South":null,"East":null,"West":null});
   const [spectators, setSpectators] = useState([]);
   const [bid, setBid] = useState(0);
@@ -99,6 +100,8 @@ function App() {
 
     socket.on('roleSetSuccessful', (data) => {
       setRole(data.role);
+      setSwitchedRole(true);
+      setTimeout(()=>{setSwitchedRole(false)}, 0);
     })
 
     socket.on('receivedBid', ({selectedBid, turns, bidlog}) =>{
@@ -309,24 +312,24 @@ function App() {
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">
-                  <div className = " ml-2 ">Waiting for {getTurn(turn)} to bid</div>
+                  <div className="appTextContainer">Waiting for {getTurn(turn)} to bid</div>
                 </div>
               }
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) === role &&
                 <div className="bidOuterContainer">
-                  <div className = " ml-2 ">Your turn: select your bid</div>
+                  <div className="appTextContainer">Your turn: select your bid</div>
                   <Bid bid={bid} handleSelectBid={handleSelectBid} handleSelectPass={handleSelectPass} role={role} turn={getTurn(turn)}></Bid>               
                 </div>
               }
 
               {status === "selectPartner" && role != null && getTurn(turn) !== role &&
                 <div className="selectPartnerOuterContainer">
-                  <div className="ml-2">Waiting for {getTurn(turn)} to select partner</div>
+                  <div className="appTextContainer">Waiting for {getTurn(turn)} to select partner</div>
                 </div>
               }
               {status === "selectPartner" && role != null && getTurn(turn) === role &&
                 <div className="selectPartnerOuterContainer">
-                  <div className="ml-2">Your turn: select your partner</div>
+                  <div className="appTextContainer">Your turn: select your partner</div>
                   <SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}></SelectPartner>
                 </div>
               }
@@ -349,7 +352,7 @@ function App() {
             }
           </button>
         </div>
-        {status !== "setup" &&
+        {status !== "setup" && role != null && role !== "Spectator" && switchedRole === false &&
           <div className="handContainer">
             {hand.map(({id,suite,val}) => <button onMouseEnter={()=>{cardAudioPlay();}} onClick = {(event) => {handleClickCard(event,id,suite,val)}}  disabled={getCardDisableStatus(id,suite,val)} key = {id} className = {getCardClassTest(suite)}><img className={getSVGClassName(id,suite,val)} src={imgDict[suite][val-2]} alt="Logo" /></button>)}
           </div>

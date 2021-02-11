@@ -1,8 +1,10 @@
 .App {
   display: flex;
   flex-direction: column;
+  position: absolute;
   height: 100vh;
   width: 100vw;
+  overflow: hidden;
 }
 
 .toolBarContainer {
@@ -66,10 +68,10 @@
 
 .onlineChatContainer {
   display: flex;
-  height: 50vh;
-  width: 50vw;
-  min-width: 200px;
-  max-width: 300px;
+  height: 70vh;
+  width: 80vw;
+  max-width: 500px;
+  max-height: 600px;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -82,7 +84,7 @@
 
 .onlineChatContainer.active {
   transform: translate(-50%, -50%) scale(1);
-  z-index: 100;
+  z-index: 102;
 }
 
 .chatToggleButton {
@@ -205,16 +207,19 @@
   height: 100%;
   width: 100%;
   --card-width: calc((30vh - 50px) / 88 * 63);
-  --hand-width: 80vw;
+  --hand-width: 50vw;
   --offset: calc((var(--card-width) - var(--hand-width) / 13) * -1);
-  --final-offset: min(var(--offset), calc(var(--card-width) / -3));
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
   margin-left: var(--final-offset);
   transition: 0.2s ease-in;
   transform: translateX(calc(var(--final-offset) / -2));
 }
 
 .cardTest:hover ~ .cardTest {
-  transform: translateX(20%);
+  transform: translateX(calc((var(--final-offset) / -2) + 20%));
 }
 
 .svgClass {
@@ -244,15 +249,15 @@ button {
 }
 
 .bidOuterContainer {
-  font-size: x-large;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 40%;
+  height: var(--board-inner-height);
+  width: var(--board-inner-width);
+  top: var(--board-top-margin);
   left: 50%;
-  width: calc(100% - (72px * 2));
   transform: translate(-50%, -150%);
   opacity: 0;
   animation: bidflyin 1.2s ease forwards;
@@ -266,15 +271,24 @@ button {
 }
 
 .selectPartnerOuterContainer {
-  font-size: x-large;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 40%;
+  height: var(--board-inner-height);
+  width: var(--board-inner-width);
+  top: var(--board-top-margin);
   left: 50%;
   transform: translate(-50%, -150%);
   opacity: 0;
   animation: bidflyin 1.2s ease forwards;
+}
+
+.appTextContainer {
+  color: white;
+  font-size: var(--font-size);
+  background-color: rgba(192, 192, 192, 0.3);
+  border-radius: 1vh 1vh;
+  padding: 2vh 2vh;
 }

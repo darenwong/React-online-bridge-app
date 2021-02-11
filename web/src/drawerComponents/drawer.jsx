@@ -23,13 +23,17 @@ import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import EmojiEventsIcon from '@material-ui/icons/EmojiEvents';
 import DescriptionIcon from '@material-ui/icons/Description';
 import InfoIcon from '@material-ui/icons/Info';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 const useStyles = makeStyles((theme)=>({
     button:{
-      position: "absolute",  
+      position: "absolute",
+      width: '2rem',
+      top: "0.5vh",
+      left: "0.5vh"
     },
     list: {
-    width: 250,
+    width: '250',
     },
     fullList: {
     width: 'auto',
@@ -47,6 +51,7 @@ export default function TemporaryDrawer(props) {
   const [drawerIsActive, setDrawerIsActive] = useState(false);
   const [bidLogIsActive, setBidLogIsActive] = useState(false);
   const [gameInfoIsActive, setGameInfoIsActive] = useState(false);
+  const [helpIsActive, setHelpIsActive] = useState(false);
 
   function getDeclarer(){
     return (props.bidWinner.userRole === null) ? <ListItemText>Declarer: </ListItemText> : <ListItemText>{"Declarer: "+props.bidWinner.userRole}</ListItemText>;
@@ -77,9 +82,7 @@ function getWonBid(){
 
   const list = (anchor) => (
     <div
-      className={clsx(classes.list, {
-        [classes.fullList]: anchor === 'top' || anchor === 'bottom',
-      })}
+      className={clsx(classes.list, classes.fullList)}
       role="presentation"
     >
       <List>
@@ -122,18 +125,11 @@ function getWonBid(){
       </List>      
       <Divider />
       <List>
-        <ListItem button onClick={()=>{setSettingsIsActive(!settingsIsActive)}}>
+        <ListItem button onClick={()=>{setSettingsIsActive(!settingsIsActive); setDrawerIsActive(false)}}>
           <ListItemIcon><SettingsIcon /></ListItemIcon>
           <ListItemText primary={"Settings"} />
-          {settingsIsActive ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
-        <Collapse in={settingsIsActive} timeout="auto" unmountOnExit>
-          <ListItem button className={classes.nested} onClick={()=>{setBackgroundIsActive(true); setDrawerIsActive(false)}}>
-            <ListItemIcon><ImageIcon /></ListItemIcon>
-            <ListItemText primary={"Background"} />
-          </ListItem>
-        </Collapse>
-        <ListItem button>
+        <ListItem button onClick={()=>{setHelpIsActive(true);setDrawerIsActive(false)}}>
           <ListItemIcon><HelpIcon /></ListItemIcon>
           <ListItemText primary={"Help"} />
         </ListItem>
@@ -142,14 +138,26 @@ function getWonBid(){
   );
 
   return (
-    <div>
-        <div key={anchor}>
-          {backgroundIsActive && <BackgroundSetting setBgImg={props.setBgImg} open={()=>{setBackgroundIsActive(true)}} onClose={()=>{setBackgroundIsActive(false)}} />}
-          <Button className={classes.button} onClick={()=>{setDrawerIsActive(true)}}><MenuIcon style={{ fontSize: 40, color: "white" }}/></Button>
-          <Drawer anchor={anchor} open={drawerIsActive} onClose={()=>{setDrawerIsActive(false)}}>
-            {list(anchor)}
-          </Drawer>
+    <div style={{zIndex:100, backgroundColor:"transparent"}}>
+      <BackgroundSetting setBgImg={props.setBgImg} open={backgroundIsActive} onClose={()=>{setBackgroundIsActive(false)}} />
+      <Button className={classes.button} onClick={()=>{setDrawerIsActive(true)}}><MenuIcon style={{ fontSize: 40, color: "white", width: "100%", height: "100%" }}/></Button>
+      <Drawer anchor={anchor} open={drawerIsActive} onClose={()=>{setDrawerIsActive(false)}}>
+        {list(anchor)}
+      </Drawer>
+      <Drawer anchor={anchor} open={settingsIsActive} onClose={()=>{setSettingsIsActive(false)}}>
+        <div className={clsx(classes.list, classes.fullList)}>
+          <List>
+            <ListItem button onClick={()=>{setSettingsIsActive(false);setDrawerIsActive(true)}}>
+              <ListItemIcon><ArrowBackIcon /></ListItemIcon>
+              <ListItemText primary={"Back"} />
+            </ListItem>
+            <ListItem button className={clsx(classes.list, classes.fullList)} onClick={()=>{setBackgroundIsActive(true); setSettingsIsActive(false)}}>
+              <ListItemIcon><ImageIcon /></ListItemIcon>
+              <ListItemText primary={"Background"} />
+            </ListItem>
+          </List>
         </div>
+      </Drawer>
     </div>
   );
 }

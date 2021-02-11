@@ -113,7 +113,7 @@ function Board(props) {
     }
 
     function getScoreboard(role){
-        return (<button className="scoreboard">{props.scoreboard[role]}</button>);
+        return (<div className="scoreboard btn">{props.scoreboard[role]}</div>);
     }
 
     function getBidClassName(bid, index, role){
@@ -193,8 +193,8 @@ function Board(props) {
                 onSelect={(event) => {props.handleSelectRole(role,event)}}
                 id="dropdown-basic-button" 
                 variant={getVariantName(role)} 
-                className="roleButton" 
-                drop={'right'}
+                className="roleButton btn" 
+                drop={(role === "North" || role === "South") ?'right':'up'}
             >
                 <Dropdown.Item className="roleButton" eventKey={"AI"}>AI</Dropdown.Item>
                 <Dropdown.Item className="roleButton" eventKey={"Human"}>Me</Dropdown.Item>
@@ -223,60 +223,86 @@ function Board(props) {
         </div>
 
       
-      <div className = "board">
-        <div className = "north">
-            <div className = "stat">
-                {getContract("North")}
-                {getPartnerCard("North")}
-            </div>
-            <div className = "top">
-                {getSelectRoleButton("North")}
-                {getScoreboard("North")}
-            </div>
-            {getBid("North")}
-        </div>
-        <div className="west">
-            <div className = "stat">
-                {getContract("West")}
-                {getPartnerCard("West")}
-            </div>
-            <div className = "top">
-                {getSelectRoleButton("West")}
-                {getScoreboard("West")}
-            </div>
-            {getBid("West")}
-        </div>
-        <div className="east">
-            <div className = "stat">
-                {getContract("East")}
-                {getPartnerCard("East")}
-            </div>
-            <div className = "top">
-                {getSelectRoleButton("East")}
-                {getScoreboard("East")}
-            </div>
-            {getBid("East")}
-        </div>
-        <div className = "south">
-            <div className = "stat">
-                {getContract("South")}
-                {getPartnerCard("South")}
-            </div>
-            <div className = "top">
-                {getSelectRoleButton("South")}
-                {getScoreboard("South")}
-            </div>
-            {getBid("South")}
-        </div>
+        <div className = "board">
+            <div className = "north">
 
-        {transitions.map(({ item, key, props }) => item&&
-            <animated.div key={key} style={props} className="boardCard container active">
-                {getCardPlayed("North", boardPlaceholder, currentRoundWinner)}
-                {getCardPlayed("West", boardPlaceholder, currentRoundWinner)}
-                {getCardPlayed("South", boardPlaceholder, currentRoundWinner)}
-                {getCardPlayed("East", boardPlaceholder, currentRoundWinner)}
-            </animated.div>
-        )}
+                <div className = "verticalSide">
+                    {getScoreboard("North")}
+                    {getSelectRoleButton("North")}
+                    <div className = "stat">
+                        {getContract("North")}
+                        {getPartnerCard("North")}
+                    </div>
+                </div>
+                {getBid("North")}
+            </div>
+            <div className="west">
+                <div className = "horizontalSide">
+                    {getSelectRoleButton("West")}
+                    {getScoreboard("West")}
+                    <div className = "stat">
+                        {getContract("West")}
+                        {getPartnerCard("West")}
+                    </div>
+                </div>
+                {getBid("West")}
+            </div>
+            <div className="east">
+                <div className = "horizontalSide">
+                    {getSelectRoleButton("East")}
+                    {getScoreboard("East")}
+                    <div className = "stat">
+                        {getContract("East")}
+                        {getPartnerCard("East")}
+                    </div>
+                </div>
+                {getBid("East")}
+            </div>
+            <div className = "south">
+                <div className = "verticalSide">
+                    {getSelectRoleButton("South")}
+                    {getScoreboard("South")}
+                    <div className = "stat">
+                        {getContract("South")}
+                        {getPartnerCard("South")}
+                    </div>
+                </div>
+                {getBid("South")}
+            </div>
+
+            {transitions.map(({ item, key, props }) => item&&
+                <animated.div key={key} style={props} className="boardCard container active">
+                    {getCardPlayed("North", boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("West", boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("South", boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("East", boardPlaceholder, currentRoundWinner)}
+                </animated.div>
+            )}
+
+            {props.status === "setup" && props.getNumberPlayers() < 4 &&
+            <div className = "startButtonContainer">
+                <div className="appTextContainer">{getStartGameStatus()}</div>
+            </div>
+            }
+            {props.status === "setup" && props.getNumberPlayers() === 4 &&
+            <div className = "startButtonContainer">
+                <button disabled={props.getNumberPlayers() < 4} onClick = {(event) => props.handleStart(event)} className = "startButton btn btn-danger btn-m m-3"> Start </button>
+            </div>
+            }
+
+            {props.status === "gameOver" &&
+                <div className = "gameOverOuterContainer">
+                    <div>{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
+                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                </div>
+            }
+            {props.status === "allPass" &&
+                <div className = "gameOverOuterContainer">    
+                    <div className="appTextContainer">{"Game ended, all players passed"}</div>
+                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                </div>
+            }
+        </div>
         {(props.status === "play" || props.status === "gameOver") &&
             <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
                 {getCardPlayed("North", lastBoard, lastRoundWinner)}
@@ -284,38 +310,12 @@ function Board(props) {
                 {getCardPlayed("South", lastBoard, lastRoundWinner)}
                 {getCardPlayed("East", lastBoard, lastRoundWinner)}
             </div>
-        }
+        }        
         {(props.status === "play" || props.status === "gameOver") &&
             <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
                 <GiPokerHand className="lastTrickIcon"/>
-                <div className="lastTrickButtonText">Last Trick</div>
             </button>
         }
-
-        {props.status === "setup" && props.getNumberPlayers() < 4 &&
-          <div className = "startButtonContainer">
-            <div>{getStartGameStatus()}</div>
-          </div>
-        }
-        {props.status === "setup" && props.getNumberPlayers() === 4 &&
-          <div className = "startButtonContainer">
-            <button disabled={props.getNumberPlayers() < 4} onClick = {(event) => props.handleStart(event)} className = "startButton btn btn-danger btn-m m-3"> Start </button>
-          </div>
-        }
-
-        {props.status === "gameOver" &&
-            <div className = "gameOverOuterContainer">
-                <div>{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
-                <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
-            </div>
-        }
-        {props.status === "allPass" &&
-            <div className = "gameOverOuterContainer">    
-                <div>{"Game ended, all players passed"}</div>
-                <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
-            </div>
-        }
-      </div>
     </div>
     );
 }

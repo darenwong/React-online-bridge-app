@@ -26,7 +26,7 @@ function BackgroundSetting(props) {
   return (
     <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={open}>
       <DialogTitle id="simple-dialog-title">Set Background</DialogTitle>
-      <Grid container className={classes.root} direction="row" spacing="3">
+      <Grid container className={classes.root} direction="row" spacing={3}>
           {backgroundImg.map((imgSrc, index) => (
             <Grid key={index} item xs={4}>
               <img alt="bgImg" src={imgSrc} className="backgroundIcon" width="100%" height="auto" onClick={()=>props.setBgImg(imgSrc)}></img>
