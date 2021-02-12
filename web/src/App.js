@@ -18,7 +18,8 @@ import cardFlipAudio from './sound/zapsplat_leisure_playing_card_turn_over_on_ta
 import useSound from 'use-sound';
 import cardAudio from './sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3';
 import TemporaryDrawer from './drawerComponents/drawer.jsx';
-import SideBar from './navbarComponents/sidebar.jsx';
+import BottomBar from './drawerComponents/bottomBar.jsx';
+
 
 //const socket = io('http://localhost:4000');
 //const ENDPOINT = 'http://localhost:4000';
@@ -27,6 +28,7 @@ const socket = io(ENDPOINT);
 let chatIsActiveGlobal = false;
 
 function App() {
+  const [boardPlaceholder, setBoardPlaceholder] = useState([]);
   const [cardAudioPlay, { cardAudioStop }] = useSound(cardAudio);
   const [bgImg, setBgImg] = useState(backgroundImg[0]);
   const [name, setName] = useState('');
@@ -60,6 +62,7 @@ function App() {
 
   const [chatIsActive, setChatIsActive] = useState(false);
   const [lastTrickIsActive, setLastTrickIsActive] = useState(false);
+  const [drawerIsActive, setDrawerIsActive] = useState(false);
 
   useEffect(() => {
     console.log("initialised app")
@@ -142,6 +145,9 @@ function App() {
         break
       case "Human":
         socket.emit('setRole', {role: role, user: name, type: event});
+        break
+      case "Leave":
+        socket.emit('setRole', {role: "Spectator", user: name, type: "Human"});
         break
       default:
         console.log('Error: Unidentified role selection', role, event);
@@ -294,6 +300,12 @@ function App() {
     return count;
   }
 
+  function chatBoxCallback() {
+    setChatIsActive(!chatIsActive); 
+    chatIsActiveGlobal=!chatIsActiveGlobal
+    if (lastTrickIsActive) {setLastTrickIsActive(false)}
+  }
+
   async function playSound(audioClass) {
     const audioEl = document.getElementsByClassName(audioClass)[0];
     if (audioEl) await audioEl.play();
@@ -303,12 +315,14 @@ function App() {
     return (
       
       <div className="App">
-        <TemporaryDrawer setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner}/>
+        <TemporaryDrawer setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} chatBoxCallback={chatBoxCallback} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        
         <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false)}}></div>
         
         <div className="mainContainer" style={{backgroundImage:`url(${bgImg})`}}>
           <div className = "playContainer ">
-              <Board status={status} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board status={status} boardPlaceholder={boardPlaceholder} setBoardPlaceholder={setBoardPlaceholder} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">
@@ -333,24 +347,10 @@ function App() {
                   <SelectPartner handleSelectPartner={handleSelectPartner} hand={hand}></SelectPartner>
                 </div>
               }
-              {hand.length > 0 && role !== "Spectator" && status !=="setup" && false &&
-                  <div className="handContainer">
-                    <div className=" ml-2 ">Your hand:</div>
-                    <div className="cardContainer">
-                      {hand.map(({id,suite,val}) => <button onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled = {disable || status !== "play"|| !checkValidCard(id,suite,val) || getTurn(turn) !== role} key = {id} className = {getCardClass(suite)}>{getCardDisplay(suite, val)} </button>)}
-                    </div>
-                  </div> 
-              }
           </div>
           <div className = {getChatClassName()}>
             <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
           </div>
-          <button className="chatToggleButton" onClick={()=>{setChatIsActive(!chatIsActive); chatIsActiveGlobal=!chatIsActiveGlobal; if (lastTrickIsActive) {setLastTrickIsActive(false)}}}>
-            <BsChatQuote className="chatIconClass"/>
-            {getNotificationNumber() > 0 &&
-              <div className="chatBadge">{getNotificationNumber()}</div>
-            }
-          </button>
         </div>
         {status !== "setup" && role != null && role !== "Spectator" && switchedRole === false &&
           <div className="handContainer">

@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import clsx from 'clsx';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles, withTheme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
@@ -24,23 +24,31 @@ import EmojiEventsIcon from '@material-ui/icons/EmojiEvents';
 import DescriptionIcon from '@material-ui/icons/Description';
 import InfoIcon from '@material-ui/icons/Info';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import RefreshIcon from '@material-ui/icons/Refresh';
+import GroupIcon from '@material-ui/icons/Group';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import RoomIcon from '@material-ui/icons/Room';
 
 const useStyles = makeStyles((theme)=>({
-    button:{
-      position: "absolute",
-      width: '2rem',
-      top: "0.5vh",
-      left: "0.5vh"
-    },
-    list: {
-    width: '250',
-    },
-    fullList: {
-    width: 'auto',
-    },  
-    nested: {
-      paddingLeft: theme.spacing(4),
-    },
+  restartButton:{
+    backgroundColor: "red",
+    color: "white",
+  },
+  button:{
+    position: "absolute",
+    width: '2rem',
+    top: "0.5vh",
+    left: "0.5vh"
+  },
+  list: {
+  width: '250',
+  },
+  fullList: {
+  width: 'auto',
+  },  
+  nested: {
+    paddingLeft: theme.spacing(4),
+  },
 }));
 
 export default function TemporaryDrawer(props) {
@@ -48,11 +56,11 @@ export default function TemporaryDrawer(props) {
   const [backgroundIsActive, setBackgroundIsActive] = useState(false);
   const classes = useStyles();
   const [anchor, setAnchor] = useState('left');
-  const [drawerIsActive, setDrawerIsActive] = useState(false);
   const [bidLogIsActive, setBidLogIsActive] = useState(false);
   const [gameInfoIsActive, setGameInfoIsActive] = useState(false);
   const [helpIsActive, setHelpIsActive] = useState(false);
-
+  const [spectatorListIsActive, setSpectatorListIsActive] = useState(false);
+  const [userProfileIsActive, setUserProfileIsActive] = useState(false);
   function getDeclarer(){
     return (props.bidWinner.userRole === null) ? <ListItemText>Declarer: </ListItemText> : <ListItemText>{"Declarer: "+props.bidWinner.userRole}</ListItemText>;
 }
@@ -86,6 +94,42 @@ function getWonBid(){
       role="presentation"
     >
       <List>
+       <ListItem button onClick={()=>{setUserProfileIsActive(!userProfileIsActive)}}>
+          <ListItemIcon><AccountCircleIcon /></ListItemIcon>
+          <ListItemText primary={"User Profile"} />
+          {userProfileIsActive ? <ExpandLess /> : <ExpandMore />}
+        </ListItem>
+        <Collapse in={userProfileIsActive} timeout="auto" unmountOnExit>
+          <ListItem className={classes.nested}>
+            <ListItemIcon><PersonIcon /></ListItemIcon>
+            <ListItemText primary={"Username: "+props.name} />
+          </ListItem>
+          <ListItem className={classes.nested}>
+            <ListItemIcon><RoomIcon /></ListItemIcon>
+            <ListItemText primary={"Room ID: "+props.room} />
+          </ListItem>
+        </Collapse>
+
+        <ListItem className={classes.restartButton} button onClick={()=>{props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}}>
+          <ListItemIcon><RefreshIcon style={{ color: "white" }}/></ListItemIcon>
+          <ListItemText primary={"Restart Game"} />
+        </ListItem>
+
+        <Divider />
+        
+        <ListItem button onClick={()=>{setSpectatorListIsActive(!spectatorListIsActive)}}>
+          <ListItemIcon><GroupIcon /></ListItemIcon>
+          <ListItemText primary={"Spectators List"} />
+          {spectatorListIsActive ? <ExpandLess /> : <ExpandMore />}
+        </ListItem>
+        <Collapse in={spectatorListIsActive} timeout="auto" unmountOnExit>
+          {props.spectators.map((spec,index) => { return (
+          <ListItem key={index} className={classes.nested}>
+            <ListItemIcon><PersonIcon /></ListItemIcon>
+            <ListItemText primary={spec} />
+          </ListItem>)})}
+        </Collapse>
+        
         <ListItem button onClick={()=>{setGameInfoIsActive(!gameInfoIsActive)}}>
           <ListItemIcon><InfoIcon /></ListItemIcon>
           <ListItemText primary={"Game Information"} />
@@ -109,6 +153,7 @@ function getWonBid(){
             {getWonBid()}
           </ListItem>
         </Collapse>
+
         <ListItem button onClick={()=>{setBidLogIsActive(!bidLogIsActive)}}>
           <ListItemIcon><LibraryBooksIcon /></ListItemIcon>
           <ListItemText primary={"Bid Log"} />
@@ -125,11 +170,11 @@ function getWonBid(){
       </List>      
       <Divider />
       <List>
-        <ListItem button onClick={()=>{setSettingsIsActive(!settingsIsActive); setDrawerIsActive(false)}}>
+        <ListItem button onClick={()=>{setSettingsIsActive(!settingsIsActive); props.setDrawerIsActive(false)}}>
           <ListItemIcon><SettingsIcon /></ListItemIcon>
           <ListItemText primary={"Settings"} />
         </ListItem>
-        <ListItem button onClick={()=>{setHelpIsActive(true);setDrawerIsActive(false)}}>
+        <ListItem button onClick={()=>{setHelpIsActive(true);props.setDrawerIsActive(false)}}>
           <ListItemIcon><HelpIcon /></ListItemIcon>
           <ListItemText primary={"Help"} />
         </ListItem>
@@ -139,15 +184,13 @@ function getWonBid(){
 
   return (
     <div style={{zIndex:100, backgroundColor:"transparent"}}>
-      <BackgroundSetting setBgImg={props.setBgImg} open={backgroundIsActive} onClose={()=>{setBackgroundIsActive(false)}} />
-      <Button className={classes.button} onClick={()=>{setDrawerIsActive(true)}}><MenuIcon style={{ fontSize: 40, color: "white", width: "100%", height: "100%" }}/></Button>
-      <Drawer anchor={anchor} open={drawerIsActive} onClose={()=>{setDrawerIsActive(false)}}>
+      <BackgroundSetting setBgImg={props.setBgImg} open={backgroundIsActive} onClose={()=>{setBackgroundIsActive(false)}} />      <Drawer anchor={anchor} open={props.drawerIsActive} onClose={()=>{props.setDrawerIsActive(false)}}>
         {list(anchor)}
       </Drawer>
       <Drawer anchor={anchor} open={settingsIsActive} onClose={()=>{setSettingsIsActive(false)}}>
         <div className={clsx(classes.list, classes.fullList)}>
           <List>
-            <ListItem button onClick={()=>{setSettingsIsActive(false);setDrawerIsActive(true)}}>
+            <ListItem button onClick={()=>{setSettingsIsActive(false);props.setDrawerIsActive(true)}}>
               <ListItemIcon><ArrowBackIcon /></ListItemIcon>
               <ListItemText primary={"Back"} />
             </ListItem>

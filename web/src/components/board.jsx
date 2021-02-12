@@ -13,7 +13,6 @@ import { GiPokerHand } from "react-icons/gi";
 
 
 function Board(props) {
-    const [boardPlaceholder, setBoardPlaceholder] = useState([]);
     const [lastBoard, setLastBoard] = useState([]);
     const [lastRoundWinner, setLastRoundWinner] = useState(null);
     const [currentRoundWinner, setCurrentRoundWinner] = useState(null);
@@ -46,7 +45,7 @@ function Board(props) {
 
     useEffect(()=>{
         if (props.turnStatus.board.length > 0){
-            setBoardPlaceholder(props.turnStatus.board);    
+            props.setBoardPlaceholder(props.turnStatus.board);    
         }
         if (props.turnStatus.board.length >3){
             switch(props.roundWinner.user){
@@ -74,7 +73,7 @@ function Board(props) {
                     let tempBoard = [...props.turnStatus.board];
                     setLastBoard(tempBoard);
                     setCurrentRoundWinner(null);
-                    setBoardPlaceholder([]);
+                    props.setBoardPlaceholder([]);
                     setShow(true);
                 },
                 300);
@@ -135,7 +134,7 @@ function Board(props) {
     function getBid(role){
         if (props.status === "bid") return( 
             <div className="bidBoardContainer">
-                {props.playerBids[role].map((bid, index)=>getBidString(bid, index, role))}
+                {props.playerBids[role].map((bid, index)=>{return getBidString(bid, index, role);})}
             </div>
         );
     }
@@ -188,7 +187,7 @@ function Board(props) {
     function getSelectRoleButton(role){
         return (
             <DropdownButton 
-                disabled = {(props.players[role]!== null && props.players[role].type !== "AI" ? true:false)}
+                disabled = {(props.players[role]!== null && props.players[role].type !== "AI" && props.players[role].name !== props.name ? true:false)}
                 title={role + getPlayerName(role)} 
                 onSelect={(event) => {props.handleSelectRole(role,event)}}
                 id="dropdown-basic-button" 
@@ -196,8 +195,9 @@ function Board(props) {
                 className="roleButton btn" 
                 drop={(role === "North" || role === "South") ?'right':'up'}
             >
-                <Dropdown.Item className="roleButton" eventKey={"AI"}>AI</Dropdown.Item>
-                <Dropdown.Item className="roleButton" eventKey={"Human"}>Me</Dropdown.Item>
+                <Dropdown.Item className="roleButton" eventKey={"AI"}>Put AI</Dropdown.Item>
+                <Dropdown.Item className="roleButton" eventKey={"Human"}>Take seat</Dropdown.Item>
+                <Dropdown.Item className="roleButton" eventKey={"Leave"}>Leave seat</Dropdown.Item>
             </DropdownButton>
         )
     }
@@ -208,21 +208,6 @@ function Board(props) {
     }
     return(
     <div className="boardContainer">
-        <div className="boardTopButton">
-            <SplitButton
-                size="sm"
-                id={`dropdown-split-variants-primary`}
-                variant={"primary"}
-                title={"Spectator"}
-                className="spectatorButton"
-                onClick = {(event) => props.handleSelectRole("Spectator","Human")}
-            >
-                {props.spectators.map((spec,index) => <Dropdown.Item key={index} disabled ={true}>{spec}</Dropdown.Item>)}
-            </SplitButton>
-            <Button style={{marginLeft:"10px"}} onClick={() => { props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "restartButton">Restart</Button>
-        </div>
-
-      
         <div className = "board">
             <div className = "north">
 
@@ -270,12 +255,12 @@ function Board(props) {
                 {getBid("South")}
             </div>
 
-            {transitions.map(({ item, key, props }) => item&&
-                <animated.div key={key} style={props} className="boardCard container active">
-                    {getCardPlayed("North", boardPlaceholder, currentRoundWinner)}
-                    {getCardPlayed("West", boardPlaceholder, currentRoundWinner)}
-                    {getCardPlayed("South", boardPlaceholder, currentRoundWinner)}
-                    {getCardPlayed("East", boardPlaceholder, currentRoundWinner)}
+            {transitions.map(({ item, key, props:prop }) => item&&
+                <animated.div key={key} style={prop} className="boardCard container active">
+                    {getCardPlayed("North", props.boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("West", props.boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("South", props.boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("East", props.boardPlaceholder, currentRoundWinner)}
                 </animated.div>
             )}
 
@@ -292,14 +277,14 @@ function Board(props) {
 
             {props.status === "gameOver" &&
                 <div className = "gameOverOuterContainer">
-                    <div>{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
-                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <div className="appTextContainer">{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
+                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
             {props.status === "allPass" &&
                 <div className = "gameOverOuterContainer">    
                     <div className="appTextContainer">{"Game ended, all players passed"}</div>
-                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
         </div>
@@ -311,11 +296,6 @@ function Board(props) {
                 {getCardPlayed("East", lastBoard, lastRoundWinner)}
             </div>
         }        
-        {(props.status === "play" || props.status === "gameOver") &&
-            <button className="lastTrickToggleButton" onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
-                <GiPokerHand className="lastTrickIcon"/>
-            </button>
-        }
     </div>
     );
 }

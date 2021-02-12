@@ -5,6 +5,7 @@
 }
 
 .boardTopButton {
+  display: none;
   position: absolute;
   width: fit-content;
   top: 5px;
@@ -17,6 +18,7 @@
 }
 
 .restartButton {
+  display: none;
   padding: 1rem;
   z-index: 100;
 }
@@ -411,6 +413,8 @@
 
 :root {
   --board-max-width: 1000px;
+  --card-height: calc(100vh - var(--board-height) - 12vh);
+  --hand-width: 50vw;
 }
 
 @media screen and (max-width: 600px) and (orientation: portrait),
@@ -453,7 +457,7 @@
     --board-inner-width: calc(min(100vw, var(--board-max-width)) - 12rem * 2);
     --board-top-margin: calc(var(--board-top-offset) + 35vh);
     --font-size: 2.5rem;
-    --btn-font-size: 1.5rem;
+    --btn-font-size: 1.25rem;
     --bid-width: 3.5rem;
     --board-height: 70vh;
   }
@@ -471,7 +475,7 @@
     --board-top-margin: calc(var(--board-top-offset) + 35vh);
     --font-size: 3rem;
     --btn-font-size: 2rem;
-    --bid-width: 4rem;
+    --bid-width: 5rem;
     --board-height: 70vh;
   }
   .board {
@@ -482,12 +486,12 @@
 
 @media screen and (orientation: portrait) {
   :root {
-    --board-top-offset: 35px;
+    --board-top-offset: 0px;
   }
 }
 
 @media screen and (orientation: landscape) {
   :root {
-    --board-top-offset: 35px;
+    --board-top-offset: 0px;
   }
 }

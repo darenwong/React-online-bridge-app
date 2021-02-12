@@ -184,8 +184,8 @@
 .handContainer {
   display: inline-flex;
   position: absolute;
-  height: calc(30% - 50px);
-  bottom: 1%;
+  height: var(--card-height);
+  bottom: 11vh;
   left: 50%;
   transform: translate(-50%, 0%);
   animation: handAnim 1.2s ease forwards;
@@ -206,8 +206,7 @@
   background-color: transparent;
   height: 100%;
   width: 100%;
-  --card-width: calc((30vh - 50px) / 88 * 63);
-  --hand-width: 50vw;
+  --card-width: calc(var(--card-height) / 88 * 63);
   --offset: calc((var(--card-width) - var(--hand-width) / 13) * -1);
   --final-offset: max(
     min(var(--offset), calc(var(--card-width) / -3)),
