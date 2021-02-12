@@ -52,6 +52,7 @@ class AI {
                 break;
             case "play":
                 let validCards = this.getValidCards(roomState);
+                if (validCards.length<=0) {return;};
                 let selectedPlayCard = this.getPlayCard(roomState, validCards); //TO DO: Add AI ALGO
                 this.selectPlayCard(roomState, io, userRoom, selectedPlayCard, ()=>callbackUpdate(roomState));
                 break;
@@ -71,8 +72,9 @@ class AI {
     getBid(roomState) {
         // TO DO: ADD AI ALGO 
         //Sample
-        if (roomState.bid <2){
-            return roomState.bid +1;
+        if (Number(roomState.bid) <10){
+            console.log(roomState.bid)
+            return Number(roomState.bid) +1;
         }else{
             return "pass";
         }
@@ -123,12 +125,12 @@ class AI {
             // For each player, search through all 13 cards in hand
             for (let i = 0; i < 13; i++){
                 if (Number(roomState.playerHands[player][i].id) === Number(card.id)){
-                    roomState.bidWinner.partner.suite = card.suite;
-                    roomState.bidWinner.partner.val = card.val-2;
+                    roomState.bidWinner.partner.card = card;
+                    //roomState.bidWinner.partner.val = card.val-2;
                     roomState.bidWinner.partner.role = player;
                     roomState.status = "play";
                     console.log("AI partner is ", player, card.suite, card.val, roomState.bidWinner.partner);
-                    io.to(userRoom).emit('receivedMsg', {username: "Admin", message: roomState.bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][roomState.bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[roomState.bidWinner.partner.suite] })
+                    //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: roomState.bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][roomState.bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[roomState.bidWinner.partner.suite] })
                     if (roomState.bidWinner.trump !== 4) {roomState.turns++;};
                     return ;
                 }
@@ -191,11 +193,9 @@ class AI {
 
         // Player cannot play twice in the same round. If caught, return
         if (roomState.checkPlayerPlayedBefore(this.role) === true){ return ;}
-    
-        // Broadcast to room chat if trump is broken
-        if (roomState.turnStatus.trumpBroken === false && roomState.checkTrumpBrokenStatus(card.suite) === true){
-            io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
-        }
+        
+        // Check and update trump broken status
+        roomState.checkTrumpBrokenStatus(card.suite);
     
         // If board is empty, set first card as starting suit
         if (roomState.turnStatus.board.length === 0){
@@ -204,7 +204,11 @@ class AI {
     
         // Add card to board
         roomState.turnStatus.board.push({user: this.role, id:card.id,suite:card.suite,val:card.val});
-    
+        if (roomState.bidWinner.partner.card.id === card.id){
+            console.log("partner revealed")
+            roomState.partnerRevealed = true;
+            roomState.partner = this.role;
+          }
         // Move Card Object from player hand to board
         roomState.updatePlayerHand(this.role, card.id);
     
@@ -212,25 +216,30 @@ class AI {
         if (roomState.turnStatus.board.length >= 4){
             // Disable all cards to prevent players from further playing any cards until next round starts
             roomState.disable = true;
-            io.to(userRoom).emit('updateState', (roomState));
-
-            // All the following updates will only take effect after timeout
-            // Get winner of the round
-            let winner = roomState.getWinner();
-            console.log('winner', winner);
-            // Set winner position to start the next round
-            roomState.turns = ["North", "East", "South", "West"].indexOf(winner.user);
-            // Add winner score by 1
-            roomState.scoreboard[winner.user] ++;
-            // Reset board state to empty
-            roomState.turnStatus.board = [];
-            // Reset starting card to null
-            roomState.turnStatus.start = null;
-            // Set disable back to false
-            roomState.disable = false;
-
+            
             setTimeout(()=>{
-                callbackFunction();
+                // Get winner of the round
+                let winner = roomState.getWinner();
+                console.log('winner', winner);
+                roomState.turns = null;
+                io.to(userRoom).emit('updateState', (roomState));
+
+                // All the following updates will only take effect after timeout
+                // Set winner position to start the next round
+                roomState.turns = ["North", "East", "South", "West"].indexOf(winner.user);
+                // Add winner score by 1
+                roomState.scoreboard[winner.user] ++;
+                // Reset board state to empty
+                roomState.turnStatus.board = [];
+                // Reset starting card to null
+                roomState.turnStatus.start = null;
+                // Set disable back to false
+                roomState.disable = false;
+
+                setTimeout(()=>{
+                    callbackFunction();
+                }, 3000);
+            
             }, 1000);
         }
         else {

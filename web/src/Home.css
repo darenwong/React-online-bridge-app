@@ -66,7 +66,7 @@
 .titleContainer {
   position: absolute;
   background-color: transparent;
-  top: 40%;
+  top: 40vh;
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
@@ -75,7 +75,7 @@
 
 .playbtnContainer {
   position: absolute;
-  top: 75%;
+  top: 75vh;
   left: 50%;
   transform: translate(-50%, -50%);
 }

@@ -1,10 +1,9 @@
 const Pool = require("pg").Pool;
 
 const pool = new Pool({
-    user: "postgres",
-    password: "abcde12345",
-    host: "localhost",
-    port: 5432,
-    database: "floatingbridge",
-})
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+    })
+pool.on('connect', () => console.log('connected to db'));
+
 module.exports= pool;

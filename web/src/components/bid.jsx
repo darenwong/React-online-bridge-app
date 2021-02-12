@@ -12,7 +12,6 @@ function Bid(props) {
 
     return (
         <div>
-            <div className = " ml-2 ">Your bid:</div>
             <div className = "bidContainer">
             {['c', 'd', 'h', 's', 'NT'].map(
                 (variant, index) => (

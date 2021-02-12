@@ -69,7 +69,7 @@ app.post("/adduser", async (req, res) => {
     const newUser = await pool.query(`INSERT INTO userlogintable (username, password) VALUES ('${name}','${password}');`);
     res.send(newUser);
   } catch (error) {
-    console.log('Error insert into DB', error);
+    console.log('Error cannot insert into DB', error);
   }
 });
 
@@ -84,14 +84,7 @@ app.get("/login/:username/:password", async (req,res)=>{
     console.log(e, 'bad request');
   }
 })
-/*
-app.post("/", async (req, res) => {
-  console.log('req',req.body);
-  const {name} = req.body;
-  const newName = await pool.query("INSERT INTO testtable (testname) VALUES ($1)",[name]);
-  res.json(newName);
-});
-*/
+
 // Initialise a global directory of rooms with just one room, which is the main room
 let rooms = {'main': new Room() };
 // Initialise a global list of users socket ID
@@ -133,6 +126,7 @@ io.on('connection', socket => {
     usernames.push(user.name);
 
     console.log(user.name + ' is connected to room: ' + user.room, usernames);
+    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + ' has joined the room'});
 
     // If user is joining a new room, create that room and add it to global rooms directory 
     if (Object.keys(rooms).indexOf(user.room) === -1){
@@ -156,7 +150,7 @@ io.on('connection', socket => {
     switch(type){
       case "AI":
         rooms[user.room].players[role] = new AI("AI",user.room,role);
-        socket.join(user.room);
+        socket.join(user.room); //Redundant?
         break
       case "Human":
         // Set user role
@@ -226,11 +220,9 @@ io.on('connection', socket => {
 
     // Player cannot play twice in the same round. If caught, return
     if (rooms[user.room].checkPlayerPlayedBefore(user.role) === true){ return ;}
-
-    // Broadcast to room chat if trump is broken
-    if (rooms[user.room].turnStatus.trumpBroken === false && rooms[user.room].checkTrumpBrokenStatus(suite) === true){
-        io.to(user.room).emit('receivedMsg', {username: "Admin", message: "Trump is broken!"});
-    }
+    
+    // Check and update trump broken status
+    rooms[user.room].checkTrumpBrokenStatus(suite);
 
     // If board is empty, set first card as starting suit
     if (rooms[user.room].turnStatus.board.length === 0){
@@ -239,6 +231,12 @@ io.on('connection', socket => {
 
     // Add card to board
     rooms[user.room].turnStatus.board.push({user: user.role, id:id,suite:suite,val:val});
+    if (rooms[user.room].bidWinner.partner.card.id === id){
+      console.log("partner revealed")
+      rooms[user.room].partnerRevealed = true;
+      rooms[user.room].partner = user.role;
+    }
+
 
     // Move Card Object from player hand to board
     rooms[user.room].updatePlayerHand(user.role, id);
@@ -247,12 +245,13 @@ io.on('connection', socket => {
     if (rooms[user.room].turnStatus.board.length >= 4){
         // Disable all cards to prevent players from further playing any cards until next round starts
         rooms[user.room].disable = true;
-        updateState(io, rooms, user.room, usernames);
-        
-        // All the following updates will only take effect after timeout
         // Get winner of the round
         let winner = rooms[user.room].getWinner();
         console.log('winner', winner);
+        rooms[user.room].turns = null;
+        updateState(io, rooms, user.room, usernames);
+        
+        // All the following updates will only take effect after timeout
         // Set winner position to start the next round
         rooms[user.room].turns = ["North", "East", "South", "West"].indexOf(winner.user);
         // Add winner score by 1
@@ -286,12 +285,11 @@ io.on('connection', socket => {
         // For each player, search through all 13 cards in hand
         for (i = 0; i < 13; i++){
             if (Number(rooms[user.room].playerHands[player][i].id) === Number(partnerID)){
-                rooms[user.room].bidWinner.partner.suite = suite;
-                rooms[user.room].bidWinner.partner.val = val;
+                rooms[user.room].bidWinner.partner.card = rooms[user.room].playerHands[player][i];
                 rooms[user.room].bidWinner.partner.role = player;
                 rooms[user.room].status = "play";
                 console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
-                io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.suite] })
+                //io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.card.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.card.suite] })
                 if (rooms[user.room].bidWinner.trump !== 4) {rooms[user.room].turns++;};
                 updateState(io, rooms, user.room, usernames);
                 return ;
@@ -340,17 +338,11 @@ function updateState(io, rooms, userRoom, usernames) {
   if (rooms[userRoom].status === "bid"){
     // Determine if there have been consecutive passes. If yes, conclude the bidding round
     rooms[userRoom].handleConsecutivePasses(rooms[userRoom].bid);
-
-    // If bidding round has ended, let room know that bidding has ended, partner selection phase starts
-    if (rooms[userRoom].status === "selectPartner"){
-        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
-        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
-    }
   }
 
   // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
   if (rooms[userRoom].checkGameOver() === true && rooms[userRoom].status != 'gameOver'){
-    io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + rooms[userRoom].finalScore + " tricks! Click Restart to play again"});
+    //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + rooms[userRoom].finalScore + " tricks! Click Restart to play again"});
     rooms[userRoom].status = "gameOver";
   }
 
@@ -368,7 +360,7 @@ function updateState(io, rooms, userRoom, usernames) {
       currentTurnPlayer.getAction(rooms[userRoom], io, userRoom, 
         callbackUpdate = (newState)=>{
           rooms[userRoom] = newState;
-          setTimeout(()=>updateState(io, rooms, userRoom, usernames), 100);
+          setTimeout(()=>updateState(io, rooms, userRoom, usernames), 1000);
         });
     }
   }

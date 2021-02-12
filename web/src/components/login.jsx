@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {Form,FormControl,Button } from 'react-bootstrap'
 import './login.css';
-const ENDPOINT = 'http://localhost:4000';
 
 function Login(props) {
     const [namePlaceholder, setNamePlaceholder] = useState("Enter your name");
@@ -13,37 +12,6 @@ function Login(props) {
     const [inGuestPage, setInGuestPage] = useState(false);
     const [inCreateAccPage, setInCreateAccPage] = useState(false);
     const [inCreateAccSuccessPage, setInCreateAccSuccessPage] = useState(false);
-
-    function handleSetUsernameDeprecated(event) {
-        event.preventDefault();
-        console.log('try: ', props.name, props.players, props.spectators, props.usernames)
-        if (props.name === "") setNamePlaceholder("Can't be empty");
-        else if (Object.values(props.usernames).indexOf(props.name) > -1) {
-            props.setName("");
-            setNamePlaceholder("Username is taken");
-        }
-        else if (props.name.length > 10){
-            props.setName("");
-            setNamePlaceholder("Name is too long");
-        }
-        else if (props.room === "") setRoomPlaceholder("Can't be empty");
-        else if (props.room.length > 10){
-            props.setRoom("");
-            setRoomPlaceholder("Room ID is too long");
-        }
-        else {
-            console.log('success: ', props.name, props.room);
-            /*const body = {name: props.name};
-            const response = await fetch("http://localhost:4000/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(body),
-            })
-            console.log('success: ', response);*/
-            props.socket.emit('setUsernameRoom', {name:props.name, room:props.room});
-            props.setIsLoggedIn(true);
-        }
-    };
 
     function handleSetRoom(event){
         event.preventDefault();
@@ -62,7 +30,8 @@ function Login(props) {
     async function handleSetUsername(event){
         event.preventDefault();
         try {
-            const response = await fetch(`${ENDPOINT}/search/${props.name}`);
+            const response = await fetch(`${props.endpoint}/search/${props.name}`);
+            console.log('response',response)
             if (response.status === 400) {
                 throw new Error(response.statusText);
               }
@@ -100,7 +69,7 @@ function Login(props) {
     async function handleLogin(event) {
         event.preventDefault();
         try {
-            const response = await fetch(`${ENDPOINT}/login/${props.name}/${password}`);
+            const response = await fetch(`${props.endpoint}/login/${props.name}/${password}`);
             const loginSuccessful = await response.json();
             console.log('received login response,',loginSuccessful);
             if(loginSuccessful) {
@@ -118,7 +87,7 @@ function Login(props) {
     async function handleCreateUser(event) {
         event.preventDefault();
         try {
-            const response = await fetch(`${ENDPOINT}/search/${props.name}`);
+            const response = await fetch(`${props.endpoint}/search/${props.name}`);
             if (response.status === 400) {
                 throw new Error(response.statusText);
               }
@@ -130,7 +99,7 @@ function Login(props) {
             } else{
                 try {
                     const body = {name: props.name, password: password};
-                    const addUserResponse = await fetch(`${ENDPOINT}/adduser`, {
+                    const addUserResponse = await fetch(`${props.endpoint}/adduser`, {
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
                         body: JSON.stringify(body),
