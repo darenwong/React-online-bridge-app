@@ -184,7 +184,8 @@ function getWonBid(){
 
   return (
     <div style={{zIndex:100, backgroundColor:"transparent"}}>
-      <BackgroundSetting setBgImg={props.setBgImg} open={backgroundIsActive} onClose={()=>{setBackgroundIsActive(false)}} />      <Drawer anchor={anchor} open={props.drawerIsActive} onClose={()=>{props.setDrawerIsActive(false)}}>
+      <BackgroundSetting setBgImg={props.setBgImg} open={backgroundIsActive} onClose={()=>{setBackgroundIsActive(false)}} />      
+      <Drawer anchor={anchor} open={props.drawerIsActive} onClose={()=>{props.setDrawerIsActive(false)}}>
         {list(anchor)}
       </Drawer>
       <Drawer anchor={anchor} open={settingsIsActive} onClose={()=>{setSettingsIsActive(false)}}>

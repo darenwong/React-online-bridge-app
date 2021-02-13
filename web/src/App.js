@@ -302,8 +302,8 @@ function App() {
 
   function chatBoxCallback() {
     setChatIsActive(!chatIsActive); 
-    chatIsActiveGlobal=!chatIsActiveGlobal
-    if (lastTrickIsActive) {setLastTrickIsActive(false)}
+    chatIsActiveGlobal=!chatIsActiveGlobal;
+    if (lastTrickIsActive) {setLastTrickIsActive(false)};
   }
 
   async function playSound(audioClass) {
@@ -316,13 +316,13 @@ function App() {
       
       <div className="App">
         <TemporaryDrawer setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
-        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} chatBoxCallback={chatBoxCallback} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} chatBoxCallback={chatBoxCallback} closeChatCallback={()=>{setChatIsActive(false); chatIsActiveGlobal=false}} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
         
-        <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false)}}></div>
+        <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false); chatIsActiveGlobal=false}}></div>
         
         <div className="mainContainer" style={{backgroundImage:`url(${bgImg})`}}>
           <div className = "playContainer ">
-              <Board status={status} boardPlaceholder={boardPlaceholder} setBoardPlaceholder={setBoardPlaceholder} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board role={role} status={status} boardPlaceholder={boardPlaceholder} setBoardPlaceholder={setBoardPlaceholder} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">

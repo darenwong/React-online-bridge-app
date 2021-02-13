@@ -217,6 +217,118 @@
   transform: translateX(calc(var(--final-offset) / -2));
 }
 
+.cardTest:first-child:nth-last-child(12),
+.cardTest:first-child:nth-last-child(12) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 12) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
+.cardTest:first-child:nth-last-child(11),
+.cardTest:first-child:nth-last-child(11) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 11) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
+.cardTest:first-child:nth-last-child(10),
+.cardTest:first-child:nth-last-child(10) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 10) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(9),
+.cardTest:first-child:nth-last-child(9) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 9) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(8),
+.cardTest:first-child:nth-last-child(8) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 8) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(7),
+.cardTest:first-child:nth-last-child(7) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 7) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(6),
+.cardTest:first-child:nth-last-child(6) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 6) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
+.cardTest:first-child:nth-last-child(5),
+.cardTest:first-child:nth-last-child(5) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 5) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(4),
+.cardTest:first-child:nth-last-child(4) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 4) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(3),
+.cardTest:first-child:nth-last-child(3) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 3) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(2),
+.cardTest:first-child:nth-last-child(2) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 2) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(1),
+.cardTest:first-child:nth-last-child(1) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 1) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
 .cardTest:hover ~ .cardTest {
   transform: translateX(calc((var(--final-offset) / -2) + 20%));
 }

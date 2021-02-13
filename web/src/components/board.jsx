@@ -10,7 +10,7 @@ import { FaRegHandshake } from "react-icons/fa";
 import { AiFillUnlock } from "react-icons/ai";
 import { IoDocumentLock } from "react-icons/io5";
 import { GiPokerHand } from "react-icons/gi";
-
+import RoleDialog from './roleDialog.jsx';
 
 function Board(props) {
     const [lastBoard, setLastBoard] = useState([]);
@@ -86,10 +86,10 @@ function Board(props) {
             return "primary"
         }
         else if (props.turn === role){
-            return "warning"
+            return "secondary"
         }
         else {
-            return "secondary"
+            return "primary"
         }
     };
 
@@ -186,6 +186,15 @@ function Board(props) {
     
     function getSelectRoleButton(role){
         return (
+            <RoleDialog 
+                title={role + getPlayerName(role)} 
+                variant={getVariantName(role)} 
+                disabled = {(props.players[role]!== null && props.players[role].type !== "AI" && props.players[role].name !== props.name ? true:false)}
+                handleSelectRole={props.handleSelectRole}
+                playerRole={props.role}
+                selectedRole={role}
+            />);
+        return (
             <DropdownButton 
                 disabled = {(props.players[role]!== null && props.players[role].type !== "AI" && props.players[role].name !== props.name ? true:false)}
                 title={role + getPlayerName(role)} 
@@ -271,7 +280,7 @@ function Board(props) {
             }
             {props.status === "setup" && props.getNumberPlayers() === 4 &&
             <div className = "startButtonContainer">
-                <button disabled={props.getNumberPlayers() < 4} onClick = {(event) => props.handleStart(event)} className = "startButton btn btn-danger btn-m m-3"> Start </button>
+                <button disabled={props.getNumberPlayers() < 4} onClick = {(event) => props.handleStart(event)} className = "startButton btn btn-danger"> Start </button>
             </div>
             }
 

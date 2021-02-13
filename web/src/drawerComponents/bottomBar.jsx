@@ -37,13 +37,13 @@ function BottomBar(props) {
   const classes = useStyles();
   return (
     <div>
-      <AppBar position="fixed" color="primary" className={classes.appBar}>
+      <AppBar position="fixed" color="default" className={classes.appBar}>
         <Toolbar>
           <IconButton color="inherit" aria-label="open drawer" className={classes.iconButton} onClick={()=>{props.setDrawerIsActive(!props.drawerIsActive)}}>
             <MenuIcon className={classes.icon}/>
           </IconButton>
           <div className={classes.grow} />
-          <IconButton color="inherit" className={classes.iconButton} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); if(props.chatIsActive){props.setChatIsActive(false)}}}>
+          <IconButton color="inherit" className={classes.iconButton} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}>
             <GiPokerHand className={classes.icon}/>
           </IconButton>
           <IconButton color="inherit" onClick={props.chatBoxCallback} className={classes.iconButton}>

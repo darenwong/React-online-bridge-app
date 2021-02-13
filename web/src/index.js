@@ -5,10 +5,25 @@ import './index.css';
 import Main from './Main';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.css';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import { red, amber} from '@material-ui/core/colors';
+
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: amber[500],
+    },
+    secondary: {
+      main: red[500],
+    },
+  },
+});
 
 ReactDOM.render(
   <React.StrictMode>
-    <Main />
+    <MuiThemeProvider theme={theme}>
+      <Main />  
+    </MuiThemeProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
