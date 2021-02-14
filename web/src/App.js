@@ -1,15 +1,12 @@
 import React, { useState, useEffect} from 'react'
-import { Navbar,Nav} from 'react-bootstrap'
 import './App.css';
 import Messages from './components/messages.jsx'
-import Toolbar from './components/toolbar.jsx'
 import Board from './components/board.jsx'
 import Bid from './components/bid.jsx'
 import SelectPartner from './components/selectPartner.jsx'
 import io from 'socket.io-client'
 import cardPlayVideo from './videos/cardsplay.mp4';
-import Login from './components/login.jsx';
-import { BsChatQuote } from 'react-icons/bs';
+import LoginPage from './components/loginPage.jsx';
 import imgDict from './importSVG';
 import backgroundImg from './importBackgroundImg';
 
@@ -19,7 +16,7 @@ import useSound from 'use-sound';
 import cardAudio from './sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3';
 import TemporaryDrawer from './drawerComponents/drawer.jsx';
 import BottomBar from './drawerComponents/bottomBar.jsx';
-
+import Home from './Home';
 
 //const socket = io('http://localhost:4000');
 //const ENDPOINT = 'http://localhost:4000';
@@ -63,9 +60,9 @@ function App() {
   const [chatIsActive, setChatIsActive] = useState(false);
   const [lastTrickIsActive, setLastTrickIsActive] = useState(false);
   const [drawerIsActive, setDrawerIsActive] = useState(false);
+  const [loginPageIsActive, setLoginPageIsActive] = useState(false);
 
   useEffect(() => {
-    console.log("initialised app")
     socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
 
     socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, scoreboard, winner}) => {
@@ -97,7 +94,6 @@ function App() {
 
     socket.on('receivedMsg', (message) => {
       (chatIsActiveGlobal===true) ?message.read = true: message.read = false;
-      console.log('msg received', chatIsActiveGlobal, message);
       setChat(chat => [...chat,message]);
     })
 
@@ -116,14 +112,13 @@ function App() {
   }, []);
 
   useEffect(()=>{
-    if (turnStatus.board.length > 3) console.log('play',playSound("card-flip-audio"));
-    else console.log('play',playSound("bid-audio"));
+    if (turnStatus.board.length > 3) playSound("card-flip-audio");
+    else playSound("bid-audio");
   }, [turn])
 
   useEffect(()=>{
     if (chatIsActive === true) {
       let chatDeepCopy = JSON.parse(JSON.stringify(chat));
-      console.log("chat active", chatIsActive)
       for (let i=0; i<chatDeepCopy.length; i++){
         chatDeepCopy[i].read = true;
       }
@@ -250,10 +245,6 @@ function App() {
     return (turn !== null) ? ["North", "East", "South", "West"][turn%4] : null;
   }
 
-  function getBidWinnerTurn(turn, trump) {
-    return (Number(trump) === 4 ? ["North", "East", "South", "West"][Number(turn)%4]: ["North", "East", "South", "West"][(Number(turn)+1)%4]);
-  }
-
   function getCardVal(val) {
     return ["2","3","4","5","6","7","8","9","10","J","Q","K","A"][val];
   }
@@ -262,11 +253,6 @@ function App() {
     let symbol = {"c": <div className={getCardClass(suite)}>{getCardVal(val-2)}&clubs;</div>, "d": <div className={getCardClass(suite)}>{getCardVal(val-2)}&diams;</div>, "h": <div className={getCardClass(suite)}>{getCardVal(val-2)}&hearts;</div>, "s": <div className={getCardClass(suite)}>{getCardVal(val-2)}&spades;</div>};
     return symbol[suite];
   }
-
-/*  function getCardClass(suite){
-    let temp = "btn btn-sm m-2 ";
-    return ((suite === "c" || suite === "s") ? temp + "btn-dark" : temp + "btn-danger");
-  }*/
 
   function getCardClass(suite){
     return ((suite === "c" || suite === "s") ? "bid center" : "bid red center");
@@ -315,7 +301,7 @@ function App() {
     return (
       
       <div className="App">
-        <TemporaryDrawer setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        <TemporaryDrawer exitCallback={()=>setIsLoggedIn(false)} setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
         <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} chatBoxCallback={chatBoxCallback} closeChatCallback={()=>{setChatIsActive(false); chatIsActiveGlobal=false}} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
         
         <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false); chatIsActiveGlobal=false}}></div>
@@ -364,22 +350,12 @@ function App() {
     )
   }else{
     return (
-      <div className="App">
-        <Toolbar className= "toolBarContainer" socket={socket}/>
-        
+      <div>
         <video autoPlay muted loop className="video">
           <source src={cardPlayVideo} />
         </video>
-        
-        <Login endpoint={ENDPOINT} usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn}/>
-
-        <div className="navrow2">
-          <Navbar bg="dark" variant="dark" style={{width:'100%'}}>
-            {isLoggedIn && <Navbar.Text>{"Room ID: " + room}</Navbar.Text>}
-            <Nav className="mr-auto"></Nav>
-            <Navbar.Text>{(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}</Navbar.Text>
-          </Navbar>
-        </div>
+        <Home openLoginPage={()=>setLoginPageIsActive(true)}/>
+        <LoginPage open={loginPageIsActive} onClose={()=>setLoginPageIsActive(false)} endpoint={ENDPOINT} usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn} numOfPlayers={(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}/>
       </div>
     );
   }

@@ -8,6 +8,21 @@ import ComputerIcon from '@material-ui/icons/Computer';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import EjectIcon from '@material-ui/icons/Eject';
 import Slide from '@material-ui/core/Slide';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import { red, amber} from '@material-ui/core/colors';
+
+const roleTheme = createMuiTheme({
+  palette: {
+    primary: {
+      main: amber[500],
+    },
+    secondary: {
+      main: red[500],
+    },
+  },
+});
+
+
 
 const TransitionUp = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -52,8 +67,10 @@ function RoleDialog(props) {
   }
 
   return (
-    <div>
-      <Button variant="contained" color={props.variant} onClick={()=>{setOpen(!open)}}>{props.title}</Button>
+    <>
+      <MuiThemeProvider theme={roleTheme}>
+        <Button variant="contained" color={props.variant} onClick={()=>{setOpen(!open)}} className="btn">{props.title}</Button>
+      </MuiThemeProvider>
       <Dialog 
         onClose={()=>{setOpen(false)}} 
         aria-labelledby="simple-dialog-title" 
@@ -83,7 +100,7 @@ function RoleDialog(props) {
           </ListItem>
         </List>
       </Dialog>
-    </div>
+    </>
   );
 }
 export default RoleDialog

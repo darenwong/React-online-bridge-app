@@ -410,6 +410,7 @@
 
 .btn {
   border-radius: 1vh 1vh !important;
+  font-size: var(--btn-font-size) !important;
 }
 
 :root {

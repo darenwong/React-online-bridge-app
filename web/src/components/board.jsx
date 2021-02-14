@@ -1,15 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import SplitButton from 'react-bootstrap/SplitButton';
 import { Button} from 'react-bootstrap'
-import DropdownButton from 'react-bootstrap/DropdownButton'
-import Dropdown from 'react-bootstrap/Dropdown';
 import './board.css';
 import imgDict from '../importSVG';
 import {useTransition, animated} from 'react-spring';
 import { FaRegHandshake } from "react-icons/fa";
 import { AiFillUnlock } from "react-icons/ai";
 import { IoDocumentLock } from "react-icons/io5";
-import { GiPokerHand } from "react-icons/gi";
 import RoleDialog from './roleDialog.jsx';
 
 function Board(props) {
@@ -64,7 +60,6 @@ function Board(props) {
                 default:
                     console.log("Error: Unknown winner")
             };
-            console.log('transitions', transitions);
             setLastRoundWinner(props.roundWinner);
             setCurrentRoundWinner(props.roundWinner);
             setTimeout(()=>{
@@ -194,21 +189,6 @@ function Board(props) {
                 playerRole={props.role}
                 selectedRole={role}
             />);
-        return (
-            <DropdownButton 
-                disabled = {(props.players[role]!== null && props.players[role].type !== "AI" && props.players[role].name !== props.name ? true:false)}
-                title={role + getPlayerName(role)} 
-                onSelect={(event) => {props.handleSelectRole(role,event)}}
-                id="dropdown-basic-button" 
-                variant={getVariantName(role)} 
-                className="roleButton btn" 
-                drop={(role === "North" || role === "South") ?'right':'up'}
-            >
-                <Dropdown.Item className="roleButton" eventKey={"AI"}>Put AI</Dropdown.Item>
-                <Dropdown.Item className="roleButton" eventKey={"Human"}>Take seat</Dropdown.Item>
-                <Dropdown.Item className="roleButton" eventKey={"Leave"}>Leave seat</Dropdown.Item>
-            </DropdownButton>
-        )
     }
 
     function getStartGameStatus(){
@@ -287,13 +267,13 @@ function Board(props) {
             {props.status === "gameOver" &&
                 <div className = "gameOverOuterContainer">
                     <div className="appTextContainer">{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
-                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginTop:"1vh"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
             {props.status === "allPass" &&
                 <div className = "gameOverOuterContainer">    
                     <div className="appTextContainer">{"Game ended, all players passed"}</div>
-                    <Button style={{marginLeft:"10px"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginTop:"1vh"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
         </div>

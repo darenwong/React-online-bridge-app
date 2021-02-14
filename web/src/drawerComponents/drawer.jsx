@@ -1,14 +1,12 @@
 import React, {useState} from 'react';
 import clsx from 'clsx';
-import { makeStyles, withTheme } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
-import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import MenuIcon from '@material-ui/icons/Menu';
 import Collapse from '@material-ui/core/Collapse';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
@@ -28,10 +26,11 @@ import RefreshIcon from '@material-ui/icons/Refresh';
 import GroupIcon from '@material-ui/icons/Group';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import RoomIcon from '@material-ui/icons/Room';
+import HomeIcon from '@material-ui/icons/Home';
 
 const useStyles = makeStyles((theme)=>({
   restartButton:{
-    backgroundColor: "red",
+    backgroundColor: "red !important",
     color: "white",
   },
   button:{
@@ -177,6 +176,10 @@ function getWonBid(){
         <ListItem button onClick={()=>{setHelpIsActive(true);props.setDrawerIsActive(false)}}>
           <ListItemIcon><HelpIcon /></ListItemIcon>
           <ListItemText primary={"Help"} />
+        </ListItem>
+        <ListItem button>
+          <ListItemIcon><HomeIcon /></ListItemIcon>
+          <ListItemText primary={"Home"} />
         </ListItem>
       </List>
     </div>
