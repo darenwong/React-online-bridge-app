@@ -1,7 +1,10 @@
 .App {
   display: flex;
   flex-direction: column;
+  position: absolute;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 .toolBarContainer {
@@ -13,10 +16,10 @@
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  background-image: url(images/background.png);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
   height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .playContainer {
@@ -65,10 +68,10 @@
 
 .onlineChatContainer {
   display: flex;
-  height: 50vh;
-  width: 50vw;
-  min-width: 200px;
-  max-width: 300px;
+  height: 70vh;
+  width: 80vw;
+  max-width: 500px;
+  max-height: 600px;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -81,15 +84,15 @@
 
 .onlineChatContainer.active {
   transform: translate(-50%, -50%) scale(1);
-  z-index: 100;
+  z-index: 102;
 }
 
 .chatToggleButton {
   position: fixed;
   height: 10vh;
   width: 10vh;
-  right: 10px;
-  bottom: 10px;
+  right: 1vh;
+  bottom: 1vh;
   z-index: 10;
   cursor: pointer;
   background-color: white;
@@ -181,7 +184,8 @@
 .handContainer {
   display: inline-flex;
   position: absolute;
-  bottom: 1%;
+  height: var(--card-height);
+  bottom: 11vh;
   left: 50%;
   transform: translate(-50%, 0%);
   animation: handAnim 1.2s ease forwards;
@@ -200,17 +204,136 @@
 
 .cardTest {
   background-color: transparent;
-  width: 8vw;
-  margin-left: -4vw;
+  height: 100%;
+  width: 100%;
+  --card-width: calc(var(--card-height) / 88 * 63);
+  --offset: calc((var(--card-width) - var(--hand-width) / 13) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
   transition: 0.2s ease-in;
+  transform: translateX(calc(var(--final-offset) / -2));
+}
+
+.cardTest:first-child:nth-last-child(12),
+.cardTest:first-child:nth-last-child(12) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 12) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
+.cardTest:first-child:nth-last-child(11),
+.cardTest:first-child:nth-last-child(11) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 11) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
+.cardTest:first-child:nth-last-child(10),
+.cardTest:first-child:nth-last-child(10) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 10) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(9),
+.cardTest:first-child:nth-last-child(9) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 9) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(8),
+.cardTest:first-child:nth-last-child(8) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 8) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(7),
+.cardTest:first-child:nth-last-child(7) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 7) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(6),
+.cardTest:first-child:nth-last-child(6) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 6) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+
+.cardTest:first-child:nth-last-child(5),
+.cardTest:first-child:nth-last-child(5) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 5) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(4),
+.cardTest:first-child:nth-last-child(4) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 4) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(3),
+.cardTest:first-child:nth-last-child(3) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 3) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(2),
+.cardTest:first-child:nth-last-child(2) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 2) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
+}
+.cardTest:first-child:nth-last-child(1),
+.cardTest:first-child:nth-last-child(1) ~ .cardTest {
+  --offset: calc((var(--card-width) - var(--hand-width) / 1) * -1);
+  --final-offset: max(
+    min(var(--offset), calc(var(--card-width) / -3)),
+    calc(var(--card-width) * -1)
+  );
+  margin-left: var(--final-offset);
 }
 
 .cardTest:hover ~ .cardTest {
-  transform: translateX(20%);
+  transform: translateX(calc((var(--final-offset) / -2) + 20%));
 }
 
 .svgClass {
-  width: 100%;
   height: 100%;
   box-shadow: 5px 10px 18px black;
   filter: brightness(100%);
@@ -237,13 +360,14 @@ button {
 }
 
 .bidOuterContainer {
-  font-size: x-large;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 45%;
+  height: var(--board-inner-height);
+  width: var(--board-inner-width);
+  top: var(--board-top-margin);
   left: 50%;
   transform: translate(-50%, -150%);
   opacity: 0;
@@ -258,15 +382,24 @@ button {
 }
 
 .selectPartnerOuterContainer {
-  font-size: x-large;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: absolute;
-  top: 45%;
+  height: var(--board-inner-height);
+  width: var(--board-inner-width);
+  top: var(--board-top-margin);
   left: 50%;
   transform: translate(-50%, -150%);
   opacity: 0;
   animation: bidflyin 1.2s ease forwards;
+}
+
+.appTextContainer {
+  color: white;
+  font-size: var(--font-size);
+  background-color: rgba(192, 192, 192, 0.3);
+  border-radius: 1vh 1vh;
+  padding: 2vh 2vh;
 }

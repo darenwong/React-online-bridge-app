@@ -1,6 +1,13 @@
 .Home {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.homePlaceholder {
+  position: absolute;
+  top: 0;
+  height: 90vh;
 }
 
 .video {
@@ -32,7 +39,7 @@
 }
 
 .topbtn {
-  font-size: 5vh;
+  font-size: calc(var(--btn-font-size) + 1vh);
   font-weight: 500;
   color: white;
   background-color: transparent;
@@ -46,12 +53,12 @@
 }
 
 .topbtn:hover {
-  font-size: 6vh;
-  color: rgba(0, 0, 0, 0.75);
-  background: rgba(255, 255, 255, 0.5);
-  padding: 2vh;
-  border-bottom-right-radius: 2vh;
-  border-bottom-left-radius: 2vh;
+  font-size: calc(var(--btn-font-size) + 2vh);
+  color: rgba(255, 255, 255, 1);
+  background: rgba(255, 0, 0, 0.5);
+  padding: 1vh;
+  border-bottom-right-radius: 1vh;
+  border-bottom-left-radius: 1vh;
   text-decoration: underline;
   outline: none;
 }
@@ -82,7 +89,7 @@
 
 .playbtn {
   width: 20vh;
-  background-color: transparent;
+  background-color: rgba(255, 0, 0, 0.7);
   font-size: 5vh;
   font-weight: bold;
   border-color: white;
@@ -134,7 +141,28 @@
   background: rgba(0, 0, 0, 0.66);
   color: white;
   padding: 10vw;
-  font-size: 1.5rem;
+  font-size: var(--btn-font-size);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#tutorial.textContainer {
+  background-color: rgba(0, 0, 0, 0.66);
+}
+
+#about.textContainer {
+  background-color: rgba(255, 196, 0, 1);
+  color: black;
+}
+
+.textContainer div div {
+  overflow: visible !important;
+}
+
+.textContainerTitle {
+  font-size: calc(var(--btn-font-size) + 1vh);
+  font-weight: 500;
 }
 
 .viewport-header {
@@ -170,6 +198,7 @@
 
 .creditsText {
   color: white;
+  font-size: var(--btn-font-size);
 }
 
 .image {
@@ -177,5 +206,40 @@
   left: 2vw;
   background-color: transparent;
   background-size: cover;
-  width: 20vw;
+  height: 5vh;
+}
+
+.imgStack {
+  position: relative;
+  width: 50vw;
+  height: 50vh;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 0%);
+}
+
+.imgCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  --side-offset: 10vw;
+}
+
+.imgCard:nth-last-child(n + 4) {
+  --x: calc(-50% - 2 * var(--side-offset));
+  transform: translate(var(--x), -50%) scale(0.9);
+  box-shadow: 0 0 1px 1px #00000003;
+}
+.imgCard:nth-last-child(3) {
+  --x: calc(-50% - var(--side-offset));
+  transform: translate(var(--x), -50%) scale(0.95);
+}
+.imgCard:nth-last-child(2) {
+  --x: calc(-50%);
+  transform: translate(var(--x), -50%) scale(1);
+}
+.imgCard:nth-last-child(1) {
+  --x: calc(-50% + var(--side-offset));
+  transform: translate(var(--x), -50%) scale(1.05);
 }

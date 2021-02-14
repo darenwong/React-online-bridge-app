@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import {FormControl,Button } from 'react-bootstrap'
 import './messages.css';
 import ScrollToBottom from 'react-scroll-to-bottom';
+import { IoMdSend } from "react-icons/io";
 
 function Messages(props) {
 
@@ -31,7 +32,7 @@ function Messages(props) {
         <form onSubmit={(event) => props.handleSendMsg(event)}>
           <div className="chat">
             <FormControl type="text" value={props.msg} placeholder="Type your message" className="mr-sm" onChange={(event) => props.setMsg(event.target.value)}/>
-            <Button variant="primary" type="submit" value="Submit" >Submit</Button>
+            <Button variant="primary" type="submit" value="Submit" ><IoMdSend/></Button>
           </div>
         </form>
       </div>
