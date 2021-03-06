@@ -60,7 +60,7 @@ function LoginPage(props) {
     }
 
     function getClientNumber(){
-      return (props.noClients === 1) ?props.noClients + " player is online" : props.noClients + " players are online";
+      return (props.totNoClients === 1) ?props.totNoClients + " player is online" : props.totNoClients + " players are online";
     }
 
     return (

@@ -16,7 +16,6 @@ import backgroundImg from './importBackgroundImg';
 import { MdPersonAdd } from "react-icons/md";
 
 import bidAudio from './sound/zapsplat_vehicles_car_radio_button_press_interior_nissan_patrol_2019_002_55345.mp3';
-import cardFlipAudio from './sound/zapsplat_leisure_playing_card_turn_over_on_table_001_10410.mp3';
 import useSound from 'use-sound';
 import cardAudio from './sound/zapsplat_foley_business_card_slide_from_pack_002_32902.mp3';
 import TemporaryDrawer from './drawerComponents/drawer.jsx';
@@ -43,14 +42,13 @@ const useStyles = makeStyles((theme) => ({
 function App() {
   const classes = useStyles();
   
-  const [boardPlaceholder, setBoardPlaceholder] = useState([]);
   const [cardAudioPlay, { cardAudioStop }] = useSound(cardAudio);
   const [bgImg, setBgImg] = useState(backgroundImg[0]);
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
 
-  const [usernames, setUsernames] = useState([]);
+  const [totNoClients, setTotNoClients] = useState(0);
   const [noClients, setNoClients] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [msg, setMsg] = useState('');
@@ -73,6 +71,7 @@ function App() {
   const [partner, setPartner] = useState(null);
 
   const [turnStatus, setTurnStatus] =  useState({start: null, board:[], trumpBroken:false});
+  const [prevBoard, setPrevBoard] = useState([]);
   const [scoreboard, setScoreboard] = useState({"North":0,"East":0,"South":0,"West":0});
   const [winner, setWinner] = useState([]);
   const [disable, setDisable] = useState(false);
@@ -86,12 +85,14 @@ function App() {
 
   const [loading, setLoading] = useState({status: false, msg: ''});
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     setLoading({status: true, msg: 'Initialising State'});
 
-    socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
+    socket.on('updateTotalNumberOfClients', (totNoClients) =>setTotNoClients(totNoClients))
 
-    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, scoreboard, winner}) => {
+    socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, prevBoard, scoreboard, winner}) => {
       setLoading({status: false, msg: ''});
       setBidWinner(bidWinner);
       setRoundWinner(roundWinner)
@@ -103,6 +104,7 @@ function App() {
       setPlayers(players);
       setSpectators(spectators);
       setTurnStatus(turnStatus);
+      setPrevBoard(prevBoard);
       setScoreboard(scoreboard);
       setWinner(winner);
       setNoClients(clients);
@@ -153,7 +155,7 @@ function App() {
       setReconnected(true);
     })
     socket.io.on('reconnect_attempt', (attempt)=>{
-      //console.log('reconnect_attempt', attempt)
+      if (attempt > 2){setError('Failed to reconnect')}
     })
 
     socket.on('connect_error', ()=>{
@@ -176,13 +178,26 @@ function App() {
       setSocketIsConnected(true);
       setLoading({status: true, msg: 'Connected'});
       if (name){
-        socket.emit('initialise', name);
-        socket.emit('joinRoom_req', room, roomPassword, function successCallback(){
-          setLoading({status: true, msg: 'Joining Room'});
-          setIsLoggedIn(true);
+        setLoading({status: true, msg: 'Setting username'});
+        socket.emit('setUsername_req',name, function callback(requestStatus, user, error){
+          if (requestStatus === 400){
+            setName(user.name);
+            setRoom(user.room);
+            //console.log('setUsername', user)
+          }else if (requestStatus === 200){
+            setName(null);
+          }
+          setLoading({status: false, msg: ''});
+        })
+
+        setLoading({status: true, msg: 'Joining Room'});
+        socket.emit('joinRoom_req', room, roomPassword, function callback(requestStatus, msg){
+          if (requestStatus === 400){ setIsLoggedIn(true);}
+          else {setError(msg);}
+          setLoading({status: false, msg: ''});
         });
-      }else{
-        socket.emit('initialise');
+      } else{
+        setLoading({status: false, msg: ''});
       }
     })
 
@@ -192,8 +207,7 @@ function App() {
   }, [name])
 
   useEffect(()=>{
-    if (turnStatus.board.length > 3) playSound("card-flip-audio");
-    else playSound("bid-audio");
+    if (turnStatus.board.length <= 3) playSound("bid-audio");
   }, [turn])
 
   function handleSendMsg(event) {
@@ -370,19 +384,19 @@ function App() {
       
       <div className="App">
         <ServerConnection open={reconnected} handleClose={()=>setReconnected(false)}/>
-
+        <ErrorDialog open={(error)?true:false} error={error}/>
 
         <UsernameDialog open={(name)?false:true} setLoading={setLoading} socket={socket} setName={setName} setRoom={setRoom}/>
 
         <Backdrop className={classes.backdrop} open={loading.status}><CircularProgress/> {loading.msg}</Backdrop>
-        <TemporaryDrawer exitCallback={()=>setIsLoggedIn(false)} setLoading={setLoading} setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} name={name} room={room} roomPassword={roomPassword} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
-        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} closeChatCallback={()=>{setChatIsActive(false)}} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive} chatCallback={chatCallback}/>
+        <TemporaryDrawer exitCallback={()=>setIsLoggedIn(false)} setLoading={setLoading} setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} name={name} room={room} roomPassword={roomPassword} spectators={spectators} socket={socket} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} closeChatCallback={()=>{setChatIsActive(false)}} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive} chatCallback={chatCallback}/>
         
-        <Backdrop className={classes.chatbackdrop} open={chatIsActive || lastTrickIsActive} onClick={()=>setChatIsActive(!chatIsActive)}></Backdrop>
+        <Backdrop className={classes.chatbackdrop} open={chatIsActive || lastTrickIsActive} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false)}}></Backdrop>
         
         <div className="mainContainer" style={{backgroundImage:`url(${bgImg})`}}>
           <div className = "playContainer ">
-              <Board role={role} status={status} setLoading={setLoading} boardPlaceholder={boardPlaceholder} setBoardPlaceholder={setBoardPlaceholder} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board role={role} status={status} setLoading={setLoading} prevBoard={prevBoard} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">
@@ -417,20 +431,19 @@ function App() {
         }
         <audio className="bid-audio" preload="auto" crossOrigin="anonymous" src={bidAudio}></audio>
         <audio className="card-audio" preload="auto" crossOrigin="anonymous" src={cardAudio}></audio>
-        <audio className="card-flip-audio" preload="auto" crossOrigin="anonymous" src={cardFlipAudio}></audio>
       </div>
     )
   }else{
     return (
       <div>
         <ServerConnection open={reconnected} handleClose={()=>setReconnected(false)}/>
-
+        <ErrorDialog open={(error)?true:false} error={error}/>
         <Backdrop className={classes.backdrop} open={loading.status}><CircularProgress/> {loading.msg}</Backdrop>
         <video autoPlay muted loop className="video">
           <source src={cardPlayVideo} />
         </video>
         <Home openLoginPage={()=>setLoginPageIsActive(true)}/>
-        <LoginPage open={loginPageIsActive} onClose={()=>setLoginPageIsActive(false)} noClients={noClients} setLoading={setLoading} endpoint={ENDPOINT} usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn} numOfPlayers={(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"} socket={socket}/>
+        <LoginPage open={loginPageIsActive} onClose={()=>setLoginPageIsActive(false)} setLoading={setLoading} endpoint={ENDPOINT} totNoClients={totNoClients} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn} socket={socket}/>
       </div>
     );
   }
@@ -448,6 +461,8 @@ function UsernameDialog(props){
   }
 
   function handleSetUsername(){
+    if (!namePlaceholder) return errorCallback("Can't be empty");
+
     props.setLoading({status: true, msg: 'Setting username'});
     props.socket.emit('setUsername_req',namePlaceholder, function callback(requestStatus, user, error){
       if (requestStatus === 400){
@@ -505,6 +520,20 @@ function ServerConnection(props){
     </>
   );
 }
+
+function ErrorDialog(props){
+  return (
+    <>
+      <Dialog open={props.open}>
+        <DialogTitle id="simple-dialog-title">Error</DialogTitle>
+        <DialogContent dividers>
+          {props.error}
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 
 export default App;
 

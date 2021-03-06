@@ -35,7 +35,7 @@ const maxBottomBarHeight = '50px';
 const maxBottomBarIconSize = '40px';
 const useStyles = makeStyles((theme) => ({
   appBar: {
-    position: 'absolute',
+    position: 'fixed',
     top: 'auto',
     bottom: 0,
     width: '100%',
@@ -55,7 +55,18 @@ const useStyles = makeStyles((theme) => ({
     maxWidth: maxBottomBarIconSize,
   },
   iconButton: {
+    root: {
+      height: '5vh',
+      width: '5vh',
+      maxHeight: maxBottomBarIconSize,
+      maxWidth: maxBottomBarIconSize,
+      padding: '0 3vh',
+    },
   },
+  botNavButton: {
+    alignSelf: 'center',
+    padding: '0 !important',
+  }
 }));
 
 function BottomBar(props) {
@@ -71,14 +82,14 @@ function BottomBar(props) {
     return (
       <AppBar position="fixed" color="default" className={classes.appBar}>
         <Toolbar>
-          <IconButton color="inherit" aria-label="open drawer" className={classes.iconButton} onClick={()=>{props.setDrawerIsActive(!props.drawerIsActive)}}>
+          <IconButton color="inherit" classes={classes.iconButton} onClick={()=>{props.setDrawerIsActive(!props.drawerIsActive)}}>
             <MenuIcon className={classes.icon}/>
           </IconButton>
           <div className={classes.grow} />
-          <IconButton color="inherit" className={classes.iconButton} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}>
+          <IconButton color="inherit" classes={classes.iconButton} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}>
             <GiPokerHand className={classes.icon}/>
           </IconButton>
-          <IconButton color="inherit" onClick={props.chatCallback} className={classes.iconButton}>
+          <IconButton color="inherit" onClick={props.chatCallback} classes={classes.iconButton}>
             <Badge badgeContent={props.notificationNumber} color="secondary">
                 <BsChatQuote className={classes.icon}/>
             </Badge>
@@ -89,9 +100,9 @@ function BottomBar(props) {
     } else {
       return (
         <BottomNavigation value={value} onChange={handleChange} className={classes.appBar}>
-          <BottomNavigationAction value="menu" icon={<FiMenu />} onClick={()=>{props.setDrawerIsActive(!props.drawerIsActive)}}/>
-          <BottomNavigationAction value="lastTrick" icon={<GiPokerHand />} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}/>
-          <BottomNavigationAction value="chat" icon={
+          <BottomNavigationAction className={classes.botNavButton} value="menu" icon={<FiMenu />} onClick={()=>{props.setDrawerIsActive(!props.drawerIsActive)}}/>
+          <BottomNavigationAction className={classes.botNavButton} value="lastTrick" icon={<GiPokerHand />} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}/>
+          <BottomNavigationAction className={classes.botNavButton} value="chat" icon={
             <Badge badgeContent={props.notificationNumber} color="secondary">
               <BsChatQuote className={classes.icon}/>
             </Badge>

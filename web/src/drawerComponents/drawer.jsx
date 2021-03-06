@@ -92,7 +92,6 @@ export default function TemporaryDrawer(props) {
   function handleRestart(){
     props.socket.emit('requestRestart'); 
     props.setLoading({status: true, msg: "Restarting"});
-    props.setBoardPlaceholder([])
   }
 
   const list = (anchor) => (

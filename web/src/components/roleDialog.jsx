@@ -69,7 +69,7 @@ function RoleDialog(props) {
   return (
     <>
       <MuiThemeProvider theme={roleTheme}>
-        <Button variant="contained" color={props.variant} onClick={()=>{setOpen(!open)}} className="btn">{props.title}</Button>
+        <Button variant="contained" color={props.variant} onClick={()=>{(!open && !props.disabled)?setOpen(true):setOpen(false)}} className="btn">{props.title}</Button>
       </MuiThemeProvider>
       <Dialog 
         onClose={()=>{setOpen(false)}} 
