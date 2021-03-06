@@ -112,8 +112,6 @@ io.on('connection', socket => {
     while (rooms[id]){
       id = crypto.randomBytes(2).toString('hex');
     }
-    id = 'a'; //For testing only
-    password ='a'; //For testing only
     callback(id, password);
   })
 
@@ -399,5 +397,5 @@ function getTurn(turn) {
 
 
 app.get("/", (req, res) => {
-  res.send(io.sockets.adapter.rooms).status(200);
+  res.send(users).status(200);
 });
