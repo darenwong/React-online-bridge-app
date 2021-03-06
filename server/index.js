@@ -139,10 +139,10 @@ io.on('connection', socket => {
 
         callback(400, "success");
       }else{
-        callback(200,"Incorrect password");
+        callback(200,{password:"Incorrect password"});
       }
     }else{
-      callback(200,"Room does not exist");
+      callback(200,{room:"Room ID not found"});
     }
   })
 
@@ -157,6 +157,7 @@ io.on('connection', socket => {
     callback(400, user, "success");
     io.to(user.room).emit('newJoiner', rooms[user.room].players, rooms[user.room].spectators);
     io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " joined the room"});
+    updateState(io, rooms, user.room);
   })
 
   // Add an event listener for when user wants to change role
@@ -346,6 +347,7 @@ io.on('connection', socket => {
     rooms[user.room].updateSpectatorList(user);
 
     io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " left the room"});
+    if (rooms[user.room].clients === 0 && user.room !== 'main') return delete rooms[user.room];
     updateState(io, rooms, user.room);
   })
 
