@@ -1,4 +1,8 @@
-import React, { useState, useEffect} from 'react'
+import React, { useState, useEffect} from 'react';
+import {Button, Backdrop, CircularProgress, Dialog, DialogTitle, DialogContent, TextField, Snackbar, Slide} from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import MuiAlert from '@material-ui/lab/Alert';
+
 import './App.css';
 import Messages from './components/messages.jsx'
 import Board from './components/board.jsx'
@@ -9,6 +13,7 @@ import cardPlayVideo from './videos/cardsplay.mp4';
 import LoginPage from './components/loginPage.jsx';
 import imgDict from './importSVG';
 import backgroundImg from './importBackgroundImg';
+import { MdPersonAdd } from "react-icons/md";
 
 import bidAudio from './sound/zapsplat_vehicles_car_radio_button_press_interior_nissan_patrol_2019_002_55345.mp3';
 import cardFlipAudio from './sound/zapsplat_leisure_playing_card_turn_over_on_table_001_10410.mp3';
@@ -19,19 +24,34 @@ import BottomBar from './drawerComponents/bottomBar.jsx';
 import Home from './Home';
 
 //const socket = io('http://localhost:4000');
-//const ENDPOINT = 'http://localhost:4000';
-const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
+const ENDPOINT = 'http://localhost:4000';
+//const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
 const socket = io(ENDPOINT);
-let chatIsActiveGlobal = false;
+
+const useStyles = makeStyles((theme) => ({
+  backdrop: {
+    zIndex: 1500,
+    color: '#fff',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  chatbackdrop:{
+    zIndex: 100,
+  }
+}));
 
 function App() {
+  const classes = useStyles();
+  
   const [boardPlaceholder, setBoardPlaceholder] = useState([]);
   const [cardAudioPlay, { cardAudioStop }] = useSound(cardAudio);
   const [bgImg, setBgImg] = useState(backgroundImg[0]);
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
+  const [roomPassword, setRoomPassword] = useState('');
+
   const [usernames, setUsernames] = useState([]);
-  const [noClients, setNoClients] = useState('');
+  const [noClients, setNoClients] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [msg, setMsg] = useState('');
   const [chat, setChat] = useState([]);
@@ -61,11 +81,18 @@ function App() {
   const [lastTrickIsActive, setLastTrickIsActive] = useState(false);
   const [drawerIsActive, setDrawerIsActive] = useState(false);
   const [loginPageIsActive, setLoginPageIsActive] = useState(false);
+  const [socketIsConnected, setSocketIsConnected] = useState(false);
+  const [reconnected, setReconnected] = useState(false);
+
+  const [loading, setLoading] = useState({status: false, msg: ''});
 
   useEffect(() => {
+    setLoading({status: true, msg: 'Initialising State'});
+
     socket.on('updateGlobalID', (usernames) =>setUsernames(usernames))
 
     socket.on('updateState', ({status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, scoreboard, winner}) => {
+      setLoading({status: false, msg: ''});
       setBidWinner(bidWinner);
       setRoundWinner(roundWinner)
       setStatus(status);
@@ -84,6 +111,17 @@ function App() {
       setPartner(partner);
     });
 
+    socket.on('connection_res', ({user}) =>{
+      setName(user.name);
+      setRoom(user.room);
+      setRoomPassword(user.roomPassword);
+    });
+
+    socket.on('newJoiner', (players, spectators)=>{
+      setPlayers(players);
+      setSpectators(spectators);
+    })
+
     socket.on('allUpdateHand' , () => {
       socket.emit('updateMyHand');
     })
@@ -93,11 +131,12 @@ function App() {
     })
 
     socket.on('receivedMsg', (message) => {
-      (chatIsActiveGlobal===true) ?message.read = true: message.read = false;
+      message.read = false;
       setChat(chat => [...chat,message]);
     })
 
     socket.on('roleSetSuccessful', (data) => {
+      setLoading({status: false, msg: ''});
       setRole(data.role);
       setSwitchedRole(true);
       setTimeout(()=>{setSwitchedRole(false)}, 0);
@@ -109,22 +148,53 @@ function App() {
       setTurn(turns);
     })
     
+    socket.io.on('reconnect', (attempt)=>{
+      //console.log('reconnect', attempt);
+      setReconnected(true);
+    })
+    socket.io.on('reconnect_attempt', (attempt)=>{
+      //console.log('reconnect_attempt', attempt)
+    })
+
+    socket.on('connect_error', ()=>{
+        //console.log('connect_error');
+        //socket.io.reconnect();
+    })
+    socket.on('disconnect', ()=>{
+      //console.log('disconnected');
+      setSocketIsConnected(false);
+      setLoading({status: true, msg: 'Reconnecting to server'});
+     //socket.connect();
+    });
+
   }, []);
+
+  useEffect(()=>{
+    socket.on('connect', ()=>{
+      //console.log('reconnecting', name);
+      setReconnected(true);
+      setSocketIsConnected(true);
+      setLoading({status: true, msg: 'Connected'});
+      if (name){
+        socket.emit('initialise', name);
+        socket.emit('joinRoom_req', room, roomPassword, function successCallback(){
+          setLoading({status: true, msg: 'Joining Room'});
+          setIsLoggedIn(true);
+        });
+      }else{
+        socket.emit('initialise');
+      }
+    })
+
+    return () => {
+      socket.off("connect");
+    }
+  }, [name])
 
   useEffect(()=>{
     if (turnStatus.board.length > 3) playSound("card-flip-audio");
     else playSound("bid-audio");
   }, [turn])
-
-  useEffect(()=>{
-    if (chatIsActive === true) {
-      let chatDeepCopy = JSON.parse(JSON.stringify(chat));
-      for (let i=0; i<chatDeepCopy.length; i++){
-        chatDeepCopy[i].read = true;
-      }
-      setChat(chatDeepCopy);
-    }
-  }, [chatIsActive])
 
   function handleSendMsg(event) {
     socket.emit('sendMsg', {message: msg, username: name});
@@ -137,40 +207,44 @@ function App() {
     switch(event) {
       case "AI":
         socket.emit('setRole', {role: role, user: "AI", type: event});
+        setLoading({status: true, msg: 'Setting AI'});
         break
       case "Human":
         socket.emit('setRole', {role: role, user: name, type: event});
-        break
-      case "Leave":
-        socket.emit('setRole', {role: "Spectator", user: name, type: "Human"});
+        (role === "Spectator") ? setLoading({status: true, msg: 'Leaving seat'}) : setLoading({status: true, msg: 'Taking seat'});
         break
       default:
-        console.log('Error: Unidentified role selection', role, event);
+        //console.log('Error: Unidentified role selection', role, event);
     }
   }
 
   function handleStart(event) {
     event.target.disabled = true;
     socket.emit('requestStart');
+    setLoading({status: true, msg: 'Starting game'});
   }
 
   function handleSelectBid(event) {
     socket.emit('setBid', event);
+    setLoading({status: true, msg: 'Bidding'});
   }
 
   function handleSelectPass(event) {
     event.target.disabled = true;
     socket.emit('setBid', "pass");
+    setLoading({status: true, msg: 'Bidding'});
   }
 
   function handleSelectPartner(selectedPartner) {
     socket.emit('setPartner', {"suite":['c','d','h','s'][Math.floor(selectedPartner/13)],"val":selectedPartner%13,"role":selectedPartner});
+    setLoading({status: true, msg: 'Selecting partner'});
   }
 
   function handleClickCard(event, id,suite,val){
     setDisable(true);
     event.target.disabled = true;
     socket.emit("requestPlayCard", {id:id,suite:suite,val:val});
+    setLoading({status: true, msg: 'Playing card'});
   }
 
   function checkValidCard(id,suite,val) {
@@ -270,12 +344,6 @@ function App() {
     return (getCardDisableStatus(id,suite,val)) ? "svgClass disable" : "svgClass";
   }
 
-  function getChatClassName(){
-    let temp = "onlineChatContainer";
-    if (chatIsActive === true) temp += " active";
-    return temp;
-  }
-
   function getNotificationNumber(){
     let count = 0;
     for (let i=0; i<chat.length; i++){
@@ -286,10 +354,10 @@ function App() {
     return count;
   }
 
-  function chatBoxCallback() {
-    setChatIsActive(!chatIsActive); 
-    chatIsActiveGlobal=!chatIsActiveGlobal;
-    if (lastTrickIsActive) {setLastTrickIsActive(false)};
+  function chatCallback(){
+    setChatIsActive(!chatIsActive);
+    setLastTrickIsActive(false);
+    //console.log(chatIsActive);
   }
 
   async function playSound(audioClass) {
@@ -301,14 +369,20 @@ function App() {
     return (
       
       <div className="App">
-        <TemporaryDrawer exitCallback={()=>setIsLoggedIn(false)} setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
-        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} chatBoxCallback={chatBoxCallback} closeChatCallback={()=>{setChatIsActive(false); chatIsActiveGlobal=false}} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        <ServerConnection open={reconnected} handleClose={()=>setReconnected(false)}/>
+
+
+        <UsernameDialog open={(name)?false:true} setLoading={setLoading} socket={socket} setName={setName} setRoom={setRoom}/>
+
+        <Backdrop className={classes.backdrop} open={loading.status}><CircularProgress/> {loading.msg}</Backdrop>
+        <TemporaryDrawer exitCallback={()=>setIsLoggedIn(false)} setLoading={setLoading} setBgImg={setBgImg} bidlog={bidlog} bidWinner={bidWinner} name={name} room={room} roomPassword={roomPassword} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive}/>
+        <BottomBar status={status} bidlog={bidlog} bidWinner={bidWinner} room={room} name={name} spectators={spectators} socket={socket} setBoardPlaceholder={setBoardPlaceholder} closeChatCallback={()=>{setChatIsActive(false)}} notificationNumber={getNotificationNumber()} setLastTrickIsActive={setLastTrickIsActive} lastTrickIsActive={lastTrickIsActive} drawerIsActive={drawerIsActive} setDrawerIsActive={setDrawerIsActive} chatCallback={chatCallback}/>
         
-        <div className={(chatIsActive || lastTrickIsActive)?"overlay active":"overlay"} onClick={()=>{setChatIsActive(false); setLastTrickIsActive(false); chatIsActiveGlobal=false}}></div>
+        <Backdrop className={classes.chatbackdrop} open={chatIsActive || lastTrickIsActive} onClick={()=>setChatIsActive(!chatIsActive)}></Backdrop>
         
         <div className="mainContainer" style={{backgroundImage:`url(${bgImg})`}}>
           <div className = "playContainer ">
-              <Board role={role} status={status} boardPlaceholder={boardPlaceholder} setBoardPlaceholder={setBoardPlaceholder} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
+              <Board role={role} status={status} setLoading={setLoading} boardPlaceholder={boardPlaceholder} setBoardPlaceholder={setBoardPlaceholder} lastTrickIsActive={lastTrickIsActive} setLastTrickIsActive={setLastTrickIsActive} chatIsActive={chatIsActive} setChatIsActive={setChatIsActive} socket={socket} partnerRevealed={partnerRevealed} partner={partner} winner={winner} bidWinner={bidWinner} playerBids={playerBids} roundWinner={roundWinner} room={room} name={name} scoreboard={scoreboard} turn = {getTurn(turn)} handleSelectRole = {handleSelectRole} players = {players} getNumberPlayers={getNumberPlayers} handleStart={handleStart} spectators={spectators} getCardClass={getCardClass} getCardDisplay={getCardDisplay} turnStatus={turnStatus}/>
               
               {status === "bid" && role !== null && role !== "Spectator" && getTurn(turn) !== role &&
                 <div className="bidOuterContainer">
@@ -334,9 +408,7 @@ function App() {
                 </div>
               }
           </div>
-          <div className = {getChatClassName()}>
-            <Messages chat={chat} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
-          </div>
+          <Messages open={chatIsActive} onClose={()=>setChatIsActive(!chatIsActive)} chat={chat} setChat={setChat} socket={socket} noClients={noClients} setMsg = {setMsg} name = {name} msg = {msg} handleSendMsg={handleSendMsg}/>
         </div>
         {status !== "setup" && role != null && role !== "Spectator" && switchedRole === false &&
           <div className="handContainer">
@@ -351,20 +423,88 @@ function App() {
   }else{
     return (
       <div>
+        <ServerConnection open={reconnected} handleClose={()=>setReconnected(false)}/>
+
+        <Backdrop className={classes.backdrop} open={loading.status}><CircularProgress/> {loading.msg}</Backdrop>
         <video autoPlay muted loop className="video">
           <source src={cardPlayVideo} />
         </video>
         <Home openLoginPage={()=>setLoginPageIsActive(true)}/>
-        <LoginPage open={loginPageIsActive} onClose={()=>setLoginPageIsActive(false)} endpoint={ENDPOINT} usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn} numOfPlayers={(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"}/>
+        <LoginPage open={loginPageIsActive} onClose={()=>setLoginPageIsActive(false)} noClients={noClients} setLoading={setLoading} endpoint={ENDPOINT} usernames={usernames} isLoggedIn = {isLoggedIn} socket={socket} setName = {setName} name = {name} setRoom={setRoom} room={room} spectators = {spectators} players={players} setIsLoggedIn={setIsLoggedIn} numOfPlayers={(usernames.length===1)?usernames.length + " player is online":usernames.length + " players are online"} socket={socket}/>
       </div>
     );
   }
 
 }
-/*{status !== "setup" &&
-<div className="handContainer">
-  {hand.map(({id,suite,val}) => <button onMouseEnter={cardAudioPlay} onMouseLeave={cardAudioStop} onClick = {(event) => handleClickCard(event,id,suite,val)}  disabled={getCardDisableStatus(id,suite,val)} key = {id} className = {getCardClassTest(suite)}><img className={getSVGClassName(id,suite,val)} src={imgDict[suite][val-2]} alt="Logo" /></button>)}
-</div>
-}*/
+
+function UsernameDialog(props){
+  const [namePlaceholder, setNamePlaceholder] = useState('');
+  const [errorFound, setErrorFound] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  function errorCallback(error) {
+    setErrorFound(true);
+    setErrorMsg(error);
+  }
+
+  function handleSetUsername(){
+    props.setLoading({status: true, msg: 'Setting username'});
+    props.socket.emit('setUsername_req',namePlaceholder, function callback(requestStatus, user, error){
+      if (requestStatus === 400){
+        props.setName(user.name);
+        props.setRoom(user.room);
+        //console.log('setUsername', user)
+      }else if (requestStatus === 200){
+        errorCallback(error);
+      }
+      props.setLoading({status: false, msg: ''});
+    })
+  }
+
+  return (
+    <>
+      <Dialog open={props.open}>
+        <DialogTitle id="simple-dialog-title">Set username</DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Name"
+            variant="outlined"
+            required
+            fullWidth
+            error={errorFound}
+            helperText={errorMsg}
+            onChange={(event) => setNamePlaceholder(event.target.value)}
+          />
+          <Button fullWidth variant="contained" color="secondary" onClick={handleSetUsername} startIcon={<MdPersonAdd/>}>Set Name</Button>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function SlideTransition(props) {
+  return <Slide {...props} direction="up" />;
+}
+
+function ServerConnection(props){
+  let {open, handleClose} = props;
+  return (
+    <>
+      <Snackbar 
+        open={open} 
+        autoHideDuration={3000} 
+        onClose={handleClose}
+        TransitionComponent={SlideTransition}
+      >
+        <MuiAlert elevation={6} variant="filled" onClose={handleClose} severity="success">
+          Connected
+        </MuiAlert>
+      </Snackbar>
+    </>
+  );
+}
+
 export default App;
 

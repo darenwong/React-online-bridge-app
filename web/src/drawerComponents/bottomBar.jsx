@@ -42,7 +42,7 @@ const useStyles = makeStyles((theme) => ({
     height: '10vh',
     maxHeight: maxBottomBarHeight, 
     justifyContent: 'center',
-    zIndex: 100,
+    zIndex: 1000,
     fontSize: "5vh",
   },
   grow: {
@@ -78,7 +78,7 @@ function BottomBar(props) {
           <IconButton color="inherit" className={classes.iconButton} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}>
             <GiPokerHand className={classes.icon}/>
           </IconButton>
-          <IconButton color="inherit" onClick={props.chatBoxCallback} className={classes.iconButton}>
+          <IconButton color="inherit" onClick={props.chatCallback} className={classes.iconButton}>
             <Badge badgeContent={props.notificationNumber} color="secondary">
                 <BsChatQuote className={classes.icon}/>
             </Badge>
@@ -91,7 +91,11 @@ function BottomBar(props) {
         <BottomNavigation value={value} onChange={handleChange} className={classes.appBar}>
           <BottomNavigationAction value="menu" icon={<FiMenu />} onClick={()=>{props.setDrawerIsActive(!props.drawerIsActive)}}/>
           <BottomNavigationAction value="lastTrick" icon={<GiPokerHand />} disabled={(props.status === "play" || props.status === "gameOver")? false :true} onClick={()=>{props.setLastTrickIsActive(!props.lastTrickIsActive); props.closeChatCallback()}}/>
-          <BottomNavigationAction value="chat" icon={<BsChatQuote />} onClick={props.chatBoxCallback}/>
+          <BottomNavigationAction value="chat" icon={
+            <Badge badgeContent={props.notificationNumber} color="secondary">
+              <BsChatQuote className={classes.icon}/>
+            </Badge>
+          } onClick={props.chatCallback}/>
         </BottomNavigation>
       );
     }

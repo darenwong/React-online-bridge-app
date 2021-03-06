@@ -74,7 +74,7 @@ function RoleDialog(props) {
       <Dialog 
         onClose={()=>{setOpen(false)}} 
         aria-labelledby="simple-dialog-title" 
-        open={open}
+        open={open && !props.disabled}
         TransitionComponent={getTransition(props.selectedRole)}
         classes={{
           paper: classes.dialog
@@ -84,17 +84,17 @@ function RoleDialog(props) {
         <List>
           <ListItem button onClick={()=>{
               props.handleSelectRole(props.selectedRole,"AI"); 
-              if (props.playerRole === props.selectedRole)props.handleSelectRole("Spectator","Human");
+              if (props.playerRole === props.selectedRole) props.handleSelectRole("Spectator","Human");
               setOpen(false);
             }}>
             <ListItemIcon><ComputerIcon /></ListItemIcon>
             <ListItemText primary={"Place AI"} />
           </ListItem>
-          <ListItem button onClick={()=>{props.handleSelectRole(props.selectedRole,"Human"); setOpen(false)}}>
+          <ListItem button disabled={props.playerRole === props.selectedRole} onClick={()=>{props.handleSelectRole(props.selectedRole,"Human"); setOpen(false)}}>
             <ListItemIcon><GetAppIcon /></ListItemIcon>
             <ListItemText primary={"Take seat"} />
           </ListItem>
-          <ListItem button onClick={()=>{props.handleSelectRole("Spectator","Human"); setOpen(false)}}>
+          <ListItem button disabled={props.playerRole !== props.selectedRole || props.playerRole === "Spectator"} onClick={()=>{props.handleSelectRole("Spectator","Human"); setOpen(false)}}>
             <ListItemIcon><EjectIcon /></ListItemIcon>
             <ListItemText primary={"Leave seat"} />
           </ListItem>

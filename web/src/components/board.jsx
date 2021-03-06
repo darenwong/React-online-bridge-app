@@ -195,6 +195,14 @@ function Board(props) {
         let numberOfEmptySeats = 4-props.getNumberPlayers();
         return (numberOfEmptySeats === 1) ? `Waiting for 1 more player to start...` : `Waiting for ${numberOfEmptySeats} more players to start...`;
     }
+
+    function handleRestart(){
+      props.socket.emit('requestRestart'); 
+      props.setBoardPlaceholder([]);
+      props.setLoading({status: true, msg: 'Restarting'})
+    }
+
+
     return(
     <div className="boardContainer">
         <div className = "board">
@@ -267,13 +275,13 @@ function Board(props) {
             {props.status === "gameOver" &&
                 <div className = "gameOverOuterContainer">
                     <div className="appTextContainer">{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
-                    <Button style={{marginTop:"1vh"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginTop:"1vh"}} onClick={handleRestart} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
             {props.status === "allPass" &&
                 <div className = "gameOverOuterContainer">    
                     <div className="appTextContainer">{"Game ended, all players passed"}</div>
-                    <Button style={{marginTop:"1vh"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginTop:"1vh"}} onClick={handleRestart} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
         </div>

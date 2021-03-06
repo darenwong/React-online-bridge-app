@@ -27,6 +27,8 @@ import GroupIcon from '@material-ui/icons/Group';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import RoomIcon from '@material-ui/icons/Room';
 import HomeIcon from '@material-ui/icons/Home';
+import MeetingRoomIcon from '@material-ui/icons/MeetingRoom';
+import VpnKeyIcon from '@material-ui/icons/VpnKey';
 
 const useStyles = makeStyles((theme)=>({
   restartButton:{
@@ -64,27 +66,33 @@ export default function TemporaryDrawer(props) {
     return (props.bidWinner.userRole === null) ? <ListItemText>Declarer: </ListItemText> : <ListItemText>{"Declarer: "+props.bidWinner.userRole}</ListItemText>;
 }
 
-function getCardVal(val) {
-    return ["2","3","4","5","6","7","8","9","10","J","Q","K","A"][val];
+  function getCardVal(val) {
+      return ["2","3","4","5","6","7","8","9","10","J","Q","K","A"][val];
+    }
+
+  function getPartner(){
+    if (!props.bidWinner.partner.card) {return <ListItemText>Partner: </ListItemText>};
+
+    let cardVal = getCardVal(props.bidWinner.partner.card.val);
+    return (props.bidWinner.partner.card.suite === null || props.bidWinner.partner.card.val === null) ? <ListItemText>Partner: </ListItemText> : {c:<ListItemText>Partner: &clubs;{cardVal}</ListItemText>, d:<ListItemText>Partner: &diams;{cardVal}</ListItemText>, h:<ListItemText>Partner: &hearts;{cardVal}</ListItemText>, s:<ListItemText>Partner: &spades;{cardVal}</ListItemText>}[props.bidWinner.partner.card.suite];
   }
 
-function getPartner(){
-  if (!props.bidWinner.partner.card) {return <ListItemText>Partner: </ListItemText>};
+  function getTrump(){
+      return (props.bidWinner.trump === null) ? <ListItemText>Trump: </ListItemText> : [<ListItemText>Trump: &clubs;</ListItemText>, <ListItemText>Trump: &diams;</ListItemText>, <ListItemText>Trump: &hearts;</ListItemText>, <ListItemText>Trump: &spades;</ListItemText>, <ListItemText>Trump: NT</ListItemText>][props.bidWinner.trump];;
+  }
 
-  let cardVal = getCardVal(props.bidWinner.partner.card.val);
-  return (props.bidWinner.partner.card.suite === null || props.bidWinner.partner.card.val === null) ? <ListItemText>Partner: </ListItemText> : {c:<ListItemText>Partner: &clubs;{cardVal}</ListItemText>, d:<ListItemText>Partner: &diams;{cardVal}</ListItemText>, h:<ListItemText>Partner: &hearts;{cardVal}</ListItemText>, s:<ListItemText>Partner: &spades;{cardVal}</ListItemText>}[props.bidWinner.partner.card.suite];
-}
-
-function getTrump(){
-    return (props.bidWinner.trump === null) ? <ListItemText>Trump: </ListItemText> : [<ListItemText>Trump: &clubs;</ListItemText>, <ListItemText>Trump: &diams;</ListItemText>, <ListItemText>Trump: &hearts;</ListItemText>, <ListItemText>Trump: &spades;</ListItemText>, <ListItemText>Trump: NT</ListItemText>][props.bidWinner.trump];;
-}
-
-function getWonBid(){
-    return (props.bidWinner.winningBid === null) ? <ListItemText>Contract: </ListItemText> : <ListItemText>{"Contract: "+props.bidWinner.winningBid}</ListItemText>;
-}
+  function getWonBid(){
+      return (props.bidWinner.winningBid === null) ? <ListItemText>Contract: </ListItemText> : <ListItemText>{"Contract: "+props.bidWinner.winningBid}</ListItemText>;
+  }
 
   function getBidMsg(bid, userRole,index){
     return (bid === "pass") ? <ListItemText>{userRole + ": Pass"}</ListItemText> : [<ListItemText>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&clubs;</ListItemText>, <ListItemText>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&diams;</ListItemText>, <ListItemText>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&hearts;</ListItemText>, <ListItemText>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1)}&spades;</ListItemText>, <ListItemText>{userRole + ": " + (Math.floor((Number(bid)-1)/5)+1) + " NT"}</ListItemText>][(Number(bid)-1)%5];
+  }
+
+  function handleRestart(){
+    props.socket.emit('requestRestart'); 
+    props.setLoading({status: true, msg: "Restarting"});
+    props.setBoardPlaceholder([])
   }
 
   const list = (anchor) => (
@@ -93,23 +101,28 @@ function getWonBid(){
       role="presentation"
     >
       <List>
-       <ListItem button onClick={()=>{setUserProfileIsActive(!userProfileIsActive)}}>
+        <ListItem>
           <ListItemIcon><AccountCircleIcon /></ListItemIcon>
-          <ListItemText primary={"User Profile"} />
+          <ListItemText primary={"Username: "+props.name} />
+        </ListItem>
+
+        <ListItem button onClick={()=>{setUserProfileIsActive(!userProfileIsActive)}}>
+          <ListItemIcon><MeetingRoomIcon /></ListItemIcon>
+          <ListItemText primary={"Room Info"} />
           {userProfileIsActive ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
+        {props.room && 
         <Collapse in={userProfileIsActive} timeout="auto" unmountOnExit>
           <ListItem className={classes.nested}>
-            <ListItemIcon><PersonIcon /></ListItemIcon>
-            <ListItemText primary={"Username: "+props.name} />
+            <ListItemIcon><RoomIcon/></ListItemIcon>
+            <ListItemText primary={"ID: "+props.room} />
           </ListItem>
           <ListItem className={classes.nested}>
-            <ListItemIcon><RoomIcon /></ListItemIcon>
-            <ListItemText primary={"Room ID: "+props.room} />
+            <ListItemIcon><VpnKeyIcon /></ListItemIcon>
+            <ListItemText primary={"Password: "+props.roomPassword} />
           </ListItem>
-        </Collapse>
-
-        <ListItem className={classes.restartButton} button onClick={()=>{props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}}>
+        </Collapse>}
+        <ListItem className={classes.restartButton} button onClick={handleRestart}>
           <ListItemIcon><RefreshIcon style={{ color: "white" }}/></ListItemIcon>
           <ListItemText primary={"Restart Game"} />
         </ListItem>
@@ -125,7 +138,7 @@ function getWonBid(){
           {props.spectators.map((spec,index) => { return (
           <ListItem key={index} className={classes.nested}>
             <ListItemIcon><PersonIcon /></ListItemIcon>
-            <ListItemText primary={spec} />
+            <ListItemText primary={spec.name} />
           </ListItem>)})}
         </Collapse>
         

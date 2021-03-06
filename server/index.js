@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 // Import Room, Deck and User Class
 const Room = require('./room');
 const Deck = require('./deck');
@@ -21,7 +22,7 @@ const io = require('socket.io')(http, {
 });
 
 app.get("/", (req, res) => {
-    res.send(users).status(200);
+    res.send(rooms).status(200);
   });
 
 app.get("/search/:username", async (req,res)=>{
@@ -34,21 +35,21 @@ app.get("/search/:username", async (req,res)=>{
   if (result.error) {
     res.statusMessage = result.error.details[0].message;
     res.status(400).end();
-    console.log('schema check search username', result.error.details[0].message);
+    //console.log('schema check search username', result.error.details[0].message);
     return;
   }
 
   try {
     const response = await pool.query(`SELECT COUNT(username) FROM userlogintable WHERE username = '${req.params.username}';`);
     res.send(response.rows[0].count).status(200);
-    console.log('response search server', response.rows[0].count);
+    //console.log('response search server', response.rows[0].count);
   } catch (error) {
-    console.log('search error: ',error);
+    //console.log('search error: ',error);
   }
 })
 
 app.post("/adduser", async (req, res) => {
-  console.log('req',req.body);
+  //console.log('req',req.body);
     
   const schema = Joi.object({
     name: Joi.string().min(2).max(10).required(),
@@ -60,7 +61,7 @@ app.post("/adduser", async (req, res) => {
   if (result.error) {
     res.statusMessage = result.error.details[0].message;
     res.status(400).end();
-    console.log('schema check result', result.error.details[0].message);
+    //console.log('schema check result', result.error.details[0].message);
     return;
   }
 
@@ -69,7 +70,7 @@ app.post("/adduser", async (req, res) => {
     const newUser = await pool.query(`INSERT INTO userlogintable (username, password) VALUES ('${name}','${password}');`);
     res.send(newUser);
   } catch (error) {
-    console.log('Error cannot insert into DB', error);
+    //console.log('Error cannot insert into DB', error);
   }
 });
 
@@ -77,16 +78,16 @@ app.get("/login/:username/:password", async (req,res)=>{
   try {
     const response = await pool.query(`SELECT COUNT(username) FROM userlogintable WHERE username = '${req.params.username}' AND password = '${req.params.password}';`);
     res.send(response.rows[0].count);
-    console.log('login response success', response.rows[0].count);
+    //console.log('login response success', response.rows[0].count);
   } catch(e) {
     res.statusMessage = "bad login request";
     res.status(400).end();
-    console.log(e, 'bad request');
+    //console.log(e, 'bad request');
   }
 })
 /*
 app.post("/", async (req, res) => {
-  console.log('req',req.body);
+  //console.log('req',req.body);
   const {name} = req.body;
   const newName = await pool.query("INSERT INTO testtable (testname) VALUES ($1)",[name]);
   res.json(newName);
@@ -104,50 +105,90 @@ io.on('connection', socket => {
   // Creates a User Object. Initialise user room to main room, and user role to spectator
   let user = new User(socket.id, null, 'main', 'Spectator');
 
-  // User socket joins the main room
-  //socket.join(user.room);
 
-  // Add user socket id to a global socket id list
-  users.push(user);
-  // Let user know he is not a spectator in the main room
-  socket.emit('roleSetSuccessful', {role: user.role});
+  socket.on('initialise', (name)=>{
+    if (name){
+      user.name = name;
+    }
 
-  console.log('a user is connected to room: ', user.room);
-  
-  // Increment number of users in main room by 1
-  rooms[user.room].clients ++;
-  console.log("updated initial state");
-  io.to(user.room).emit('updateState', (rooms[user.room]));
-  updateState(io, rooms, user.room, usernames);
+    // User socket joins the main room
+    //socket.join(user.room);
+
+    // Add user socket id to a global socket id list
+    users.push(user);
+    // Let user know he is not a spectator in the main room
+    socket.emit('roleSetSuccessful', {role: user.role});
+
+    //console.log('a user is connected to room: ', user.room);
+    socket.join(user.room);
+    // Increment number of users in main room by 1
+    console.log('initialise', rooms[user.room].clients, user.room)
+    rooms[user.room].clients ++;
+    //console.log("updated initial state");
+    io.to(user.room).emit('updateState', (rooms[user.room]));
+    updateState(io, rooms, user.room, usernames);
+
+  });
 
 
   // The following code consists of adding various Event Listener to listen for events from client side
 
-  // Add an event listener for when user wants to move room
-  socket.on('setUsernameRoom', ({name, room}) => {
-    // Set user name and room
-    user.name = name;
-    user.room = room;
-
-    // Add user name to global usernames list
-    usernames.push(user.name);
-
-    console.log(user.name + ' is connected to room: ' + user.room, usernames);
-    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + ' has joined the room'});
-
-    // If user is joining a new room, create that room and add it to global rooms directory 
-    if (Object.keys(rooms).indexOf(user.room) === -1){
-        rooms[user.room] = new Room();
+  socket.on('generateRoomID_req', (callback)=>{
+    let id = crypto.randomBytes(2).toString('hex');
+    let password = crypto.randomBytes(2).toString('hex');
+    while (rooms[id]){
+      id = crypto.randomBytes(2).toString('hex');
     }
+    callback(id, password);
+  })
 
-    // User socket joins the room
-    socket.join(user.room);
+  socket.on('createRoom_req', (room, password, callback)=>{
+    //console.log('r',room,'p', password,'e', callback,'c')
+    if (rooms[room]){
+      callback(200,"Room ID already exists");
+    }else{
+      rooms[room] = new Room();
+      rooms[room].password = password;
+      callback(400, "success");
+      //socket.emit('createRoom_res', room, password);
+    }
+  })
 
-    // Append user to spectator list by default
-    rooms[user.room].spectators.push(user.name);
+  socket.on('joinRoom_req', (room, password, callback)=>{
+    //console.log('test',Object.keys(rooms), room, password);
+    if (room === 'main'){
+      socket.join(room);
+      rooms[room].clients ++;
+    }else if (rooms[room]){
+      if (rooms[room].password === password){
+        socket.join(room);
+        rooms[room].clients ++;
+        user.room = room;
+        user.roomPassword = password;
+        rooms[room].spectators.push(user);
+        socket.emit('connection_res', {user});
+        io.to(user.room).emit('newJoiner', rooms[user.room].players, rooms[user.room].spectators);
+        updateState(io, rooms, user.room, usernames);
+        callback(400, "success");
+      }else{
+        callback(200,"Incorrect password")
+      }
+    }else{
+      callback(200,"Room does not exist");
+    }
+  })
 
-    // Increase number of users in the room by 1
-    rooms[user.room].clients ++;
+  socket.on('setUsername_req', (name, callback)=>{
+    for (let i=0; i<users.length; i++){
+      if (users[i].name === name){ 
+        callback(200, null, "Username already exists");
+        return ;
+      }
+    }
+    user.name = name;
+    callback(400, user, "success");
+    io.to(user.room).emit('newJoiner', rooms[user.room].players, rooms[user.room].spectators);
+    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " has joined the room"});
     updateState(io, rooms, user.room, usernames);
   })
 
@@ -160,20 +201,21 @@ io.on('connection', socket => {
         socket.join(user.room); //Redundant?
         break
       case "Human":
+        // Update the Player list
+        rooms[user.room].updatePlayerList(user);
         // Set user role
         user.role = role;
-        // Update the Player and Spectator list
-        rooms[user.room].updatePlayerList(user);
+        // Update Spectator list
         rooms[user.room].updateSpectatorList(user);
 
         // Let user know that his role has been successfully set
         socket.emit('roleSetSuccessful', {role: role});
         break
       default:
-        console.log('Error: Unidentified role detected, neither AI or human')
+        //console.log('Error: Unidentified role detected, neither AI or human')
     }
-    
-    //console.log('setRole', role, type, rooms[user.room].players);
+    //console.log('after Set Role', Object.keys(rooms))
+    ////console.log('setRole', role, type, rooms[user.room].players);
     updateState(io, rooms, user.room, usernames);
   })
 
@@ -181,7 +223,7 @@ io.on('connection', socket => {
   socket.on('sendMsg', (data) => {
     // Handle chat message exchange
     io.to(user.room).emit('receivedMsg', data);
-    console.log("sent message: ", data.message)
+    //console.log("sent message: ", data.message)
   })
 
   // Add an event listener for when user wants to start game
@@ -196,7 +238,7 @@ io.on('connection', socket => {
     deck.shuffle();
     rooms[user.room].playerHands = deck.deal(rooms[user.room].playerHands);
 
-    //console.log("players: ", rooms[user.room].players)
+    ////console.log("players: ", rooms[user.room].players)
     updateState(io, rooms, user.room, usernames);
   })
 
@@ -223,7 +265,7 @@ io.on('connection', socket => {
 
   // Add an event listener for when user plays a card
   socket.on('requestPlayCard', ({id, suite, val}) =>{
-    console.log(user.role + " played " + suite+ " "+ val);
+    //console.log(user.role + " played " + suite+ " "+ val);
 
     // Player cannot play twice in the same round. If caught, return
     if (rooms[user.room].checkPlayerPlayedBefore(user.role) === true){ return ;}
@@ -239,7 +281,7 @@ io.on('connection', socket => {
     // Add card to board
     rooms[user.room].turnStatus.board.push({user: user.role, id:id,suite:suite,val:val});
     if (rooms[user.room].bidWinner.partner.card.id === id){
-      console.log("partner revealed")
+      //console.log("partner revealed")
       rooms[user.room].partnerRevealed = true;
       rooms[user.room].partner = user.role;
     }
@@ -254,7 +296,7 @@ io.on('connection', socket => {
         rooms[user.room].disable = true;
         // Get winner of the round
         let winner = rooms[user.room].getWinner();
-        console.log('winner', winner);
+        //console.log('winner', winner);
         rooms[user.room].turns = null;
         updateState(io, rooms, user.room, usernames);
         
@@ -280,8 +322,9 @@ io.on('connection', socket => {
 
   // Add an event listener for when user requests to update hand
   socket.on('updateMyHand', () => {
+    //console.log('updateMyHand', Object.keys(rooms), user.room);
     // If user is not playing, set hand to empty
-    (rooms[user.room].playerHands[user.role] === undefined) ? socket.emit('updateHand', []) :socket.emit('updateHand', rooms[user.room].playerHands[user.role])
+    (rooms[user.room] && rooms[user.room].playerHands[user.role] === undefined) ? socket.emit('updateHand', []) :socket.emit('updateHand', rooms[user.room].playerHands[user.role]);
     }
   )
 
@@ -295,7 +338,7 @@ io.on('connection', socket => {
                 rooms[user.room].bidWinner.partner.card = rooms[user.room].playerHands[player][i];
                 rooms[user.room].bidWinner.partner.role = player;
                 rooms[user.room].status = "play";
-                console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
+                //console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
                 //io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.card.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.card.suite] })
                 if (rooms[user.room].bidWinner.trump !== 4) {rooms[user.room].turns++;};
                 updateState(io, rooms, user.room, usernames);
@@ -325,15 +368,15 @@ io.on('connection', socket => {
     rooms[user.room].updateSpectatorList(user);
 
     updateState(io, rooms, user.room, usernames);
-    console.log('user is disconnected');
-    console.log('new state', rooms[user.room]);
+    //console.log('user is disconnected');
+    //console.log('new state', rooms[user.room]);
   })
 
 })
 
 // By default, host server on localhost: 4000.
 http.listen(process.env.PORT || 4000, function() {
-  console.log('listening on port 4000');
+  //console.log('listening on port 4000');
 })
 
 
@@ -360,7 +403,7 @@ function updateState(io, rooms, userRoom, usernames) {
   }
 
   // Delete empty room except for main room
-  if (rooms[userRoom].clients === 0 && userRoom !== 'main') delete rooms[userRoom];
+  //if (rooms[userRoom].clients === 0 && userRoom !== 'main') delete rooms[userRoom];
   
   io.to(userRoom).emit('updateState', (rooms[userRoom]));
   io.emit('updateGlobalID', usernames);
@@ -369,7 +412,7 @@ function updateState(io, rooms, userRoom, usernames) {
   if (rooms[userRoom] && rooms[userRoom].status !== "setup"){
     let currentTurnPlayer = rooms[userRoom].players[getTurn(rooms[userRoom].turns)];
     if (currentTurnPlayer && currentTurnPlayer.type === "AI"){
-      //console.log("AI Turn");
+      ////console.log("AI Turn");
       currentTurnPlayer.getAction(rooms[userRoom], io, userRoom, 
         callbackUpdate = (newState)=>{
           rooms[userRoom] = newState;
