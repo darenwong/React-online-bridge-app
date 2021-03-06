@@ -347,7 +347,7 @@ io.on('connection', socket => {
     rooms[user.room].updateSpectatorList(user);
 
     io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " left the room"});
-    if (rooms[user.room].clients === 0 && user.room !== 'main') return delete rooms[user.room];
+    //if (rooms[user.room].clients === 0 && user.room !== 'main') return delete rooms[user.room];
     updateState(io, rooms, user.room);
   })
 

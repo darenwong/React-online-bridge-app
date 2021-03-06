@@ -23,8 +23,8 @@ import BottomBar from './drawerComponents/bottomBar.jsx';
 import Home from './Home';
 
 //const socket = io('http://localhost:4000');
-const ENDPOINT = 'http://localhost:4000';
-//const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
+//const ENDPOINT = 'http://localhost:4000';
+const ENDPOINT = 'https://floating-bridge-server.herokuapp.com';
 const socket = io(ENDPOINT);
 
 const useStyles = makeStyles((theme) => ({
