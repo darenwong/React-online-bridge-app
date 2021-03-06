@@ -58,6 +58,7 @@ class Room {
             board:[], 
             trumpBroken:false
         }, 
+        this.prevBoard=[],
         this.scoreboard= {
             "North":0,
             "East":0,
@@ -107,6 +108,7 @@ class Room {
             board:[], 
             trumpBroken:false
         };
+        this.prevBoard=[];
         this.scoreboard = {
             "North":0,
             "East":0,
@@ -189,16 +191,15 @@ class Room {
      * 2 cases of consecutive passes to be accounted for:
      * 1) This is the first round of bidding and all 4 players pass, thus restarting the game.
      * 2) This is not the first round of bidding and there are 3 consecutive passes, thus concluding bidding round.
-     * @param {Number} selectedBid 
      */
-    handleConsecutivePasses(selectedBid){
+    handleConsecutivePasses(){
         if (this.pass === 4){
             this.status = "allPass";
         }
     
         else if (this.pass >= 3 && this.bidlog.length !== 3){
-            this.bidWinner.winningBid = Math.floor((Number(selectedBid)+4)/5);
-            this.bidWinner.trump = (Number(selectedBid)-1)%5;
+            this.bidWinner.winningBid = Math.floor((Number(this.bid)+4)/5);
+            this.bidWinner.trump = (Number(this.bid)-1)%5;
             this.turns = ["North", "East", "South", "West"].indexOf(this.bidWinner.userRole)
             this.status = "selectPartner";
         }

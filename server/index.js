@@ -21,9 +21,6 @@ const io = require('socket.io')(http, {
     origins: '*:*'
 });
 
-app.get("/", (req, res) => {
-    res.send(rooms).status(200);
-  });
 
 app.get("/search/:username", async (req,res)=>{
   const schema = Joi.object({
@@ -97,39 +94,15 @@ app.post("/", async (req, res) => {
 let rooms = {'main': new Room() };
 // Initialise a global list of users socket ID
 let users = [];
-// Initialise a global list of usernames
-let usernames = [];
 
 // When a client connects
 io.on('connection', socket => {
   // Creates a User Object. Initialise user room to main room, and user role to spectator
   let user = new User(socket.id, null, 'main', 'Spectator');
+  users.push(user);
 
-
-  socket.on('initialise', (name)=>{
-    if (name){
-      user.name = name;
-    }
-
-    // User socket joins the main room
-    //socket.join(user.room);
-
-    // Add user socket id to a global socket id list
-    users.push(user);
-    // Let user know he is not a spectator in the main room
-    socket.emit('roleSetSuccessful', {role: user.role});
-
-    //console.log('a user is connected to room: ', user.room);
-    socket.join(user.room);
-    // Increment number of users in main room by 1
-    console.log('initialise', rooms[user.room].clients, user.room)
-    rooms[user.room].clients ++;
-    //console.log("updated initial state");
-    io.to(user.room).emit('updateState', (rooms[user.room]));
-    updateState(io, rooms, user.room, usernames);
-
-  });
-
+  console.log(io.sockets.adapter.rooms);
+  io.emit('updateTotalNumberOfClients', users.length);
 
   // The following code consists of adding various Event Listener to listen for events from client side
 
@@ -139,27 +112,23 @@ io.on('connection', socket => {
     while (rooms[id]){
       id = crypto.randomBytes(2).toString('hex');
     }
+    id = 'a'; //For testing only
+    password ='a'; //For testing only
     callback(id, password);
   })
 
   socket.on('createRoom_req', (room, password, callback)=>{
-    //console.log('r',room,'p', password,'e', callback,'c')
     if (rooms[room]){
       callback(200,"Room ID already exists");
     }else{
       rooms[room] = new Room();
       rooms[room].password = password;
       callback(400, "success");
-      //socket.emit('createRoom_res', room, password);
     }
   })
 
   socket.on('joinRoom_req', (room, password, callback)=>{
-    //console.log('test',Object.keys(rooms), room, password);
-    if (room === 'main'){
-      socket.join(room);
-      rooms[room].clients ++;
-    }else if (rooms[room]){
+    if (rooms[room]){
       if (rooms[room].password === password){
         socket.join(room);
         rooms[room].clients ++;
@@ -168,10 +137,11 @@ io.on('connection', socket => {
         rooms[room].spectators.push(user);
         socket.emit('connection_res', {user});
         io.to(user.room).emit('newJoiner', rooms[user.room].players, rooms[user.room].spectators);
-        updateState(io, rooms, user.room, usernames);
+        updateState(io, rooms, user.room);
+
         callback(400, "success");
       }else{
-        callback(200,"Incorrect password")
+        callback(200,"Incorrect password");
       }
     }else{
       callback(200,"Room does not exist");
@@ -188,8 +158,7 @@ io.on('connection', socket => {
     user.name = name;
     callback(400, user, "success");
     io.to(user.room).emit('newJoiner', rooms[user.room].players, rooms[user.room].spectators);
-    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " has joined the room"});
-    updateState(io, rooms, user.room, usernames);
+    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " joined the room"});
   })
 
   // Add an event listener for when user wants to change role
@@ -198,7 +167,7 @@ io.on('connection', socket => {
     switch(type){
       case "AI":
         rooms[user.room].players[role] = new AI("AI",user.room,role);
-        socket.join(user.room); //Redundant?
+        checkAndGetAIAction(io, rooms, user.room);
         break
       case "Human":
         // Update the Player list
@@ -214,9 +183,8 @@ io.on('connection', socket => {
       default:
         //console.log('Error: Unidentified role detected, neither AI or human')
     }
-    //console.log('after Set Role', Object.keys(rooms))
-    ////console.log('setRole', role, type, rooms[user.room].players);
-    updateState(io, rooms, user.room, usernames);
+    updateState(io, rooms, user.room);
+    socket.emit('allUpdateHand');
   })
 
   // Add an event listener for when user send a chat message
@@ -228,6 +196,7 @@ io.on('connection', socket => {
 
   // Add an event listener for when user wants to start game
   socket.on('requestStart', () =>{
+    if (rooms[user.room].status !== "setup") return;
     // Change game phase from start to bidding phase
     rooms[user.room].status = "bid";
     
@@ -239,13 +208,15 @@ io.on('connection', socket => {
     rooms[user.room].playerHands = deck.deal(rooms[user.room].playerHands);
 
     ////console.log("players: ", rooms[user.room].players)
-    updateState(io, rooms, user.room, usernames);
+    updateState(io, rooms, user.room);
+    io.to(user.room).emit('allUpdateHand');
+    checkAndGetAIAction(io, rooms, user.room);
   })
 
   // Add an event listener for when user wants to restart game
   socket.on('requestRestart', () => {
     rooms[user.room].restart();
-    updateState(io, rooms, user.room, usernames);
+    updateState(io, rooms, user.room);
   })
   
   // Add an event listener for when user submits a bid
@@ -259,8 +230,10 @@ io.on('connection', socket => {
     // Broadcast to room that bid is received by server
     io.to(user.room).emit('receivedBid', {selectedBid: selectedBid, turns:rooms[user.room].turns, bidlog:rooms[user.room].bidlog});
 
-    
-    updateState(io, rooms, user.room, usernames);
+    // Determine if there have been consecutive passes. If yes, conclude the bidding round
+    rooms[user.room].handleConsecutivePasses(rooms[user.room].bid);
+    updateState(io, rooms, user.room);
+    checkAndGetAIAction(io, rooms, user.room);
   })
 
   // Add an event listener for when user plays a card
@@ -298,25 +271,34 @@ io.on('connection', socket => {
         let winner = rooms[user.room].getWinner();
         //console.log('winner', winner);
         rooms[user.room].turns = null;
-        updateState(io, rooms, user.room, usernames);
+        socket.emit('allUpdateHand');
+        updateState(io, rooms, user.room);
         
         // All the following updates will only take effect after timeout
         // Set winner position to start the next round
         rooms[user.room].turns = ["North", "East", "South", "West"].indexOf(winner.user);
         // Add winner score by 1
         rooms[user.room].scoreboard[winner.user] ++;
+        rooms[user.room].prevBoard = rooms[user.room].turnStatus.board;
         // Reset board state to empty
         rooms[user.room].turnStatus.board = [];
         // Reset starting card to null
         rooms[user.room].turnStatus.start = null;
         // Set disable back to false
         rooms[user.room].disable = false;
-        setTimeout(() => {  updateState(io, rooms, user.room, usernames); }, 2000);
+        // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
+        if (rooms[user.room].checkGameOver() === true && rooms[user.room].status != 'gameOver'){rooms[user.room].status = "gameOver";}
+        setTimeout(() => {  
+          updateState(io, rooms, user.room); 
+          checkAndGetAIAction(io, rooms, user.room);
+        }, 2000);
     }
     else {
         // Round hasnt ended, increment turn by 1 and let next player play
         rooms[user.room].turns = (rooms[user.room].turns + 1)%4;
-        updateState(io, rooms, user.room, usernames);
+        updateState(io, rooms, user.room);
+        socket.emit('allUpdateHand');
+        checkAndGetAIAction(io, rooms, user.room);
     }
   })
 
@@ -341,7 +323,8 @@ io.on('connection', socket => {
                 //console.log("partner is ", player, suite, val, rooms[user.room].bidWinner.partner);
                 //io.to(user.room).emit('receivedMsg', {username: "Admin", message: rooms[user.room].bidWinner.userRole + " has chosen partner: "+ ["2","3","4","5","6","7","8","9","10","Jack","Queen","King","Ace"][rooms[user.room].bidWinner.partner.card.val] + " of" + {c:" Club", d:" Diamond", h:" Heart", s:" Spade"}[rooms[user.room].bidWinner.partner.card.suite] })
                 if (rooms[user.room].bidWinner.trump !== 4) {rooms[user.room].turns++;};
-                updateState(io, rooms, user.room, usernames);
+                updateState(io, rooms, user.room);
+                checkAndGetAIAction(io, rooms, user.room);
                 return ;
             }
         }
@@ -350,8 +333,6 @@ io.on('connection', socket => {
 
   // Add an event listener for when user disconnects from server
   socket.on('disconnect', () => {
-    // Remove user from global username list
-    if (usernames.indexOf(user.name) > -1) usernames.splice(usernames.indexOf(user.name),1);
 
     // Remove user from global User Object list
     for (let i = 0; i<users.length; i++){
@@ -360,16 +341,14 @@ io.on('connection', socket => {
 
     // Update number of clients
     rooms[user.room].clients --;
-    if (user.room !== "main") rooms["main"].clients --;
     
     // Update player and spectator list
     rooms[user.room].updatePlayerList(user);
     user.role = null;
     rooms[user.room].updateSpectatorList(user);
 
-    updateState(io, rooms, user.room, usernames);
-    //console.log('user is disconnected');
-    //console.log('new state', rooms[user.room]);
+    io.to(user.room).emit('receivedMsg', {username: "Admin", message: user.name + " left the room"});
+    updateState(io, rooms, user.room);
   })
 
 })
@@ -381,51 +360,44 @@ http.listen(process.env.PORT || 4000, function() {
 
 
 
-function updateState(io, rooms, userRoom, usernames) {
-  //console.log("active rooms: ", Object.keys(rooms));
-  io.to(userRoom).emit('allUpdateHand');
-
-  if (rooms[userRoom].status === "bid"){
-    // Determine if there have been consecutive passes. If yes, conclude the bidding round
-    rooms[userRoom].handleConsecutivePasses(rooms[userRoom].bid);
-
-    // If bidding round has ended, let room know that bidding has ended, partner selection phase starts
-    /*if (rooms[userRoom].status === "selectPartner"){
-        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].bidWinner.userRole +" won the bid. Trump: " + ['Club', 'Diamond', 'Heart', 'Spade', 'No Trump'][rooms[userRoom].bidWinner.trump] + ", bid: "+rooms[userRoom].bidWinner.winningBid});
-        io.to(userRoom).emit('receivedMsg', {username: "Admin", message: "Please wait while " + rooms[userRoom].bidWinner.userRole + " selects a partner"});
-    }*/
-  }
-
-  // Check if game is over and gameover status has been updated. If no, broadcast to room that game is over
-  if (rooms[userRoom].checkGameOver() === true && rooms[userRoom].status != 'gameOver'){
-    //io.to(userRoom).emit('receivedMsg', {username: "Admin", message: rooms[userRoom].winner[0] + " and " + rooms[userRoom].winner[1] + " have won with " + rooms[userRoom].finalScore + " tricks! Click Restart to play again"});
-    rooms[userRoom].status = "gameOver";
-  }
-
+function checkAndGetAIAction(io, rooms, userRoom) {
   // Delete empty room except for main room
   //if (rooms[userRoom].clients === 0 && userRoom !== 'main') delete rooms[userRoom];
   
-  io.to(userRoom).emit('updateState', (rooms[userRoom]));
-  io.emit('updateGlobalID', usernames);
 
   // Handle AI turn and action
   if (rooms[userRoom] && rooms[userRoom].status !== "setup"){
     let currentTurnPlayer = rooms[userRoom].players[getTurn(rooms[userRoom].turns)];
     if (currentTurnPlayer && currentTurnPlayer.type === "AI"){
-      ////console.log("AI Turn");
       currentTurnPlayer.getAction(rooms[userRoom], io, userRoom, 
+        updateStateCallback=(newState)=>{
+          rooms[userRoom] = newState;
+          updateState(io, rooms, userRoom);
+        },
         callbackUpdate = (newState)=>{
           rooms[userRoom] = newState;
-          setTimeout(()=>updateState(io, rooms, userRoom, usernames), 1000);
+          setTimeout(()=>{
+            updateState(io, rooms, userRoom);
+            checkAndGetAIAction(io, rooms, userRoom);
+          }, 1000);
         });
     }
   }
 }
   
+function updateState(io, rooms, userRoom){
+  const {status, disable, clients, turns, bid, bidWinner, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, prevBoard, scoreboard, winner} = rooms[userRoom];
+  const bidWinnerCopy = JSON.parse(JSON.stringify(bidWinner));
+  bidWinnerCopy.partner.role = null;
+  console.log(bidWinnerCopy, bidWinner)
+  io.to(userRoom).emit('updateState', ({status, disable, clients, turns, bid, bidWinner: bidWinnerCopy, bidlog, playerBids, partnerRevealed, partner, roundWinner, players, spectators, turnStatus, prevBoard, scoreboard, winner}));
+}
+
 function getTurn(turn) {
   return ["North", "East", "South", "West"][turn%4];
 }
 
-function timeout(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+
+app.get("/", (req, res) => {
+  res.send(io.sockets.adapter.rooms).status(200);
+});
