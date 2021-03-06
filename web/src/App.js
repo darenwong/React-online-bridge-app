@@ -155,7 +155,7 @@ function App() {
       setReconnected(true);
     })
     socket.io.on('reconnect_attempt', (attempt)=>{
-      if (attempt > 2){setError('Failed to reconnect')}
+      console.log('reconnect', attempt);
     })
 
     socket.on('connect_error', ()=>{
@@ -196,6 +196,9 @@ function App() {
           else {setError(msg);}
           setLoading({status: false, msg: ''});
         });
+
+        setLoading({status: true, msg: 'Setting Role'});
+        socket.emit('setRole', {role: "Spectator", type: "Human"});
       } else{
         setLoading({status: false, msg: ''});
       }

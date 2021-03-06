@@ -106,7 +106,7 @@ function JoinRoomDialog(props) {
         required
         fullWidth
         error={errorFound}
-        helperText={errorMsg}
+        helperText={errorMsg.room}
         onChange={(event) => props.setRoomPlaceholder(event.target.value)}
       />
       <TextField
@@ -116,7 +116,7 @@ function JoinRoomDialog(props) {
         required
         fullWidth
         error={errorFound}
-        helperText={errorMsg}
+        helperText={errorMsg.password}
         onChange={(event) => props.setPassword(event.target.value)}
       />
       <Button fullWidth variant="contained" color="secondary" onClick={(event)=>props.handleJoinRoom(event, errorCallback)}>Enter</Button>
