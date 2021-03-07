@@ -1,4 +1,5 @@
-# Floating Bridge Online
+# Floating Bridge Online (Demo: https://floating-bridge-app.netlify.app/)
+
 This repo contains the code for both the front-end and back-end for the application.
 
 ## Pre-requisuite

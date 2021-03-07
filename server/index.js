@@ -82,14 +82,7 @@ app.get("/login/:username/:password", async (req,res)=>{
     //console.log(e, 'bad request');
   }
 })
-/*
-app.post("/", async (req, res) => {
-  //console.log('req',req.body);
-  const {name} = req.body;
-  const newName = await pool.query("INSERT INTO testtable (testname) VALUES ($1)",[name]);
-  res.json(newName);
-});
-*/
+
 // Initialise a global directory of rooms with just one room, which is the main room
 let rooms = {'main': new Room() };
 // Initialise a global list of users socket ID
@@ -357,6 +350,7 @@ io.on('connection', socket => {
 http.listen(process.env.PORT || 4000, function() {
   //console.log('listening on port 4000');
 })
+
 
 
 
