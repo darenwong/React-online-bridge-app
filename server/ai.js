@@ -9,13 +9,6 @@ class AI {
         this.room = room;
         this.role = role;
         this.type = "AI";
-
-        this.playerHands={ // To Do: Put this as a private state, do not send to client
-            "North":[],
-            "East":[],
-            "South":[],
-            "West":[]
-        }
     };
 
     /**
@@ -34,14 +27,14 @@ class AI {
      * @param {string} userRoom 
      * @param {function} callbackUpdate 
      */
-    getAction(roomState, io, userRoom, callbackUpdate) {
-        this.playerHands = roomState.playerHands;
+    getAction(roomState, io, userRoom, updateStateCallback, callbackUpdate) {
 
         switch(roomState.status){
             case "bid":
                 roomState.turns ++;
                 let selectedBid = this.getBid(roomState); //TO DO: Add AI ALGO
                 this.selectBid(roomState, selectedBid);
+                roomState.handleConsecutivePasses();
                 callbackUpdate(roomState);
                 break;
             case "selectPartner":
@@ -54,7 +47,7 @@ class AI {
                 let validCards = this.getValidCards(roomState);
                 if (validCards.length<=0) {return;};
                 let selectedPlayCard = this.getPlayCard(roomState, validCards); //TO DO: Add AI ALGO
-                this.selectPlayCard(roomState, io, userRoom, selectedPlayCard, ()=>callbackUpdate(roomState));
+                this.selectPlayCard(roomState, io, userRoom, selectedPlayCard, updateStateCallback,()=>callbackUpdate(roomState));
                 break;
             case "gameOver":
                 console.log("AI: Game over");
@@ -161,8 +154,9 @@ class AI {
      * @return {boolean}
      */
     checkValidPartnerCard(card) {
-        for (let i = 0; i < this.playerHands[this.role].length; i++) {
-            if (Number(this.playerHands[this.role][i].id) === Number(card.id)){
+        const hand = roomState.playerHands[this.role];
+        for (let i = 0; i < hand.length; i++) {
+            if (Number(hand[i].id) === Number(card.id)){
                 return false;
             }
         }
@@ -188,7 +182,7 @@ class AI {
      * @param {Card} card 
      * @param {function} callbackFunction 
      */
-    selectPlayCard(roomState, io, userRoom, card, callbackFunction) {
+    selectPlayCard(roomState, io, userRoom, card, updateStateCallback, callbackFunction) {
         console.log(this.role + " played " + card.suite+ " "+ card.val);
 
         // Player cannot play twice in the same round. If caught, return
@@ -222,19 +216,22 @@ class AI {
                 let winner = roomState.getWinner();
                 console.log('winner', winner);
                 roomState.turns = null;
-                io.to(userRoom).emit('updateState', (roomState));
+                //io.to(userRoom).emit('updateState', (roomState));
+                updateStateCallback(roomState);
 
-                // All the following updates will only take effect after timeout
                 // Set winner position to start the next round
                 roomState.turns = ["North", "East", "South", "West"].indexOf(winner.user);
                 // Add winner score by 1
                 roomState.scoreboard[winner.user] ++;
+                roomState.prevBoard = roomState.turnStatus.board;
                 // Reset board state to empty
                 roomState.turnStatus.board = [];
                 // Reset starting card to null
                 roomState.turnStatus.start = null;
                 // Set disable back to false
                 roomState.disable = false;
+                // All the following updates will only take effect after timeout
+                if (roomState.checkGameOver() === true && roomState.status != 'gameOver'){roomState.status = "gameOver";}
 
                 setTimeout(()=>{
                     callbackFunction();
@@ -255,10 +252,11 @@ class AI {
      * @return {Array}
      */
     getValidCards(roomState) {
+        const hand = roomState.playerHands[this.role]
         let validCards = [];
-        for (let i = 0; i < this.playerHands[this.role].length; i++) {
-            if (this.checkValidCard(roomState, this.playerHands[this.role][i]) === true){
-                validCards.push(this.playerHands[this.role][i]);
+        for (let i = 0; i < hand.length; i++) {
+            if (this.checkValidCard(roomState, hand[i]) === true){
+                validCards.push(hand[i]);
             }
         }
         return validCards
@@ -328,7 +326,7 @@ class AI {
      * @return {boolean}
      */
     handHasBoardStartingSuit(roomState){
-        let hand = this.playerHands[this.role];
+        const hand = roomState.playerHands[this.role];
         for (let i = 0; i < hand.length; i++) {
           if (hand[i].suite === roomState.turnStatus.start) return true; //hand contains card with board starting suit. 
         }
@@ -341,7 +339,7 @@ class AI {
      * @return {boolean}
      */
     handHasNonTrumpSuit(roomState){
-        let hand = this.playerHands[this.role];
+        const hand = roomState.playerHands[this.role];
         for (let i = 0; i < hand.length; i++) {
             if (["c","d","h","s"].indexOf(hand[i].suite) !== roomState.bidWinner.trump) return true; //hand contains non-trump suit
         }

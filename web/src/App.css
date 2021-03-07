@@ -402,4 +402,5 @@ button {
   background-color: rgba(192, 192, 192, 0.3);
   border-radius: 1vh 1vh;
   padding: 2vh 2vh;
+  text-align: center;
 }

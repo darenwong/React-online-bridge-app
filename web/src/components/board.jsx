@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState} from 'react';
 import { Button} from 'react-bootstrap'
 import './board.css';
 import imgDict from '../importSVG';
@@ -7,41 +7,29 @@ import { FaRegHandshake } from "react-icons/fa";
 import { AiFillUnlock } from "react-icons/ai";
 import { IoDocumentLock } from "react-icons/io5";
 import RoleDialog from './roleDialog.jsx';
+import cardFlipAudio from '../sound/zapsplat_leisure_playing_card_turn_over_on_table_001_10410.mp3';
 
 function Board(props) {
-    const [lastBoard, setLastBoard] = useState([]);
     const [lastRoundWinner, setLastRoundWinner] = useState(null);
     const [currentRoundWinner, setCurrentRoundWinner] = useState(null);
     const [show, setShow] = useState(true);
-    //const [bidClickSound] = useState(new Audio('../sound/zapsplat_leisure_toy_button_plastic_press_19550.wav', "anonymous"));
-    /*const [transitions, setTransitions] = useState(useTransition(show, null, {
-        from: { opacity: 0, transform: "translateY(-40px)" },
-        enter: { opacity: 1, transform: "translateY(0px)" },
-        leave: { opacity: 0, transform: "translateY(-40px)" },
-    }));*/
+
     const [direction, setDirection] = useState("translate(0%, 0%)");
 
     
     const transitions = useTransition(show, null, {
         from: { opacity: 0, transform: "translate(-50%, -50%)" },
         enter: { opacity: 1, transform: "translate(-50%, -50%)" },
-        leave: { opacity: 0, transform: direction },
+        leave: { opacity: 0, transform: direction},
     });
 
 
-/*    const transitions = useTransition(show, null, {
-        from: { opacity:1},
-        enter: { opacity:1 },
-        leave: { transform: 'translate3d(0,-80px,0)', opacity:1 },
-    })*/
 
     useEffect(()=>{
-        if (!(props.status === "play" || props.status === "gameOver")) {setLastBoard([]);}
-    },[props.status])
-
-    useEffect(()=>{
-        if (props.turnStatus.board.length > 0){
-            props.setBoardPlaceholder(props.turnStatus.board);    
+        if (props.turnStatus.board.length <4){ 
+            setShow(true);  
+            setCurrentRoundWinner(null);
+            setLastRoundWinner(props.roundWinner);
         }
         if (props.turnStatus.board.length >3){
             switch(props.roundWinner.user){
@@ -60,21 +48,19 @@ function Board(props) {
                 default:
                     console.log("Error: Unknown winner")
             };
-            setLastRoundWinner(props.roundWinner);
             setCurrentRoundWinner(props.roundWinner);
             setTimeout(()=>{
                 setShow(false);
-                setTimeout(()=>{
-                    let tempBoard = [...props.turnStatus.board];
-                    setLastBoard(tempBoard);
-                    setCurrentRoundWinner(null);
-                    props.setBoardPlaceholder([]);
-                    setShow(true);
-                },
-                300);
+                playSound("card-flip-audio");
             }, 2000);
         }
     },[props.turnStatus.board])
+
+
+    async function playSound(audioClass) {
+      const audioEl = document.getElementsByClassName(audioClass)[0];
+      if (audioEl) await audioEl.play();
+    }
 
     function getVariantName(role){
         if (props.status === "setup"){
@@ -195,6 +181,13 @@ function Board(props) {
         let numberOfEmptySeats = 4-props.getNumberPlayers();
         return (numberOfEmptySeats === 1) ? `Waiting for 1 more player to start...` : `Waiting for ${numberOfEmptySeats} more players to start...`;
     }
+
+    function handleRestart(){
+      props.socket.emit('requestRestart'); 
+      props.setLoading({status: true, msg: 'Restarting'})
+    }
+
+
     return(
     <div className="boardContainer">
         <div className = "board">
@@ -246,10 +239,10 @@ function Board(props) {
 
             {transitions.map(({ item, key, props:prop }) => item&&
                 <animated.div key={key} style={prop} className="boardCard container active">
-                    {getCardPlayed("North", props.boardPlaceholder, currentRoundWinner)}
-                    {getCardPlayed("West", props.boardPlaceholder, currentRoundWinner)}
-                    {getCardPlayed("South", props.boardPlaceholder, currentRoundWinner)}
-                    {getCardPlayed("East", props.boardPlaceholder, currentRoundWinner)}
+                    {getCardPlayed("North", props.turnStatus.board, currentRoundWinner)}
+                    {getCardPlayed("West", props.turnStatus.board, currentRoundWinner)}
+                    {getCardPlayed("South", props.turnStatus.board, currentRoundWinner)}
+                    {getCardPlayed("East", props.turnStatus.board, currentRoundWinner)}
                 </animated.div>
             )}
 
@@ -267,24 +260,25 @@ function Board(props) {
             {props.status === "gameOver" &&
                 <div className = "gameOverOuterContainer">
                     <div className="appTextContainer">{"Game over, " + props.winner[0] + " & " + props.winner[1] + " won"}</div>
-                    <Button style={{marginTop:"1vh"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginTop:"1vh"}} onClick={handleRestart} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
             {props.status === "allPass" &&
                 <div className = "gameOverOuterContainer">    
                     <div className="appTextContainer">{"Game ended, all players passed"}</div>
-                    <Button style={{marginTop:"1vh"}} onClick={() => {props.socket.emit('requestRestart'); props.setBoardPlaceholder([])}} variant="danger" className = "mr-sm-2">Play again</Button>
+                    <Button style={{marginTop:"1vh"}} onClick={handleRestart} variant="danger" className = "mr-sm-2">Play again</Button>
                 </div>
             }
         </div>
         {(props.status === "play" || props.status === "gameOver") &&
             <div className={(props.lastTrickIsActive)?"boardCard container active lastTrick":"boardCard container lastTrick"}>
-                {getCardPlayed("North", lastBoard, lastRoundWinner)}
-                {getCardPlayed("West", lastBoard, lastRoundWinner)}
-                {getCardPlayed("South", lastBoard, lastRoundWinner)}
-                {getCardPlayed("East", lastBoard, lastRoundWinner)}
+                {getCardPlayed("North", props.prevBoard, lastRoundWinner)}
+                {getCardPlayed("West", props.prevBoard, lastRoundWinner)}
+                {getCardPlayed("South", props.prevBoard, lastRoundWinner)}
+                {getCardPlayed("East", props.prevBoard, lastRoundWinner)}
             </div>
         }        
+        <audio className="card-flip-audio" preload="auto" crossOrigin="anonymous" src={cardFlipAudio}></audio>
     </div>
     );
 }
