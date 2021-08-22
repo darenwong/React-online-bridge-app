@@ -179,13 +179,6 @@
   width: 100%;
   background-color: transparent;
 }
-
-.videoContainer {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
 .botbarContainer {
   display: flex;
   flex-direction: row;
